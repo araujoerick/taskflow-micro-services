@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import type { StringValue } from 'ms';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
@@ -142,7 +143,7 @@ export class AuthService {
     // Refresh token precisa de configuração separada
     const refreshToken = await this.jwtService.signAsync(payload, {
       secret: jwtRefreshSecret,
-      expiresIn: jwtRefreshExpiresIn,
+      expiresIn: jwtRefreshExpiresIn as StringValue,
     });
 
     return {
