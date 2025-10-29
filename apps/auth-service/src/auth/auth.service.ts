@@ -119,12 +119,12 @@ export class AuthService {
   }
 
   async logout(userId: string) {
-    await this.usersRepository.update(userId, { refreshToken: null });
+    await this.usersRepository.update(userId, { refreshToken: undefined });
     return { message: 'Logged out successfully' };
   }
 
   private async generateTokens(user: User) {
-    const payload: JwtPayload = {
+    const payload = {
       sub: user.id,
       email: user.email,
     };
