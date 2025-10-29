@@ -129,14 +129,23 @@ export class AuthService {
       email: user.email,
     };
 
+    const jwtSecret = this.configService.get<string>('JWT_SECRET');
+    const jwtExpiresIn = this.configService.get<string>('JWT_EXPIRES_IN');
+    const jwtRefreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    const jwtRefreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN');
+
+    if (!jwtSecret || !jwtExpiresIn || !jwtRefreshSecret || !jwtRefreshExpiresIn) {
+      throw new Error('JWT configuration is missing in environment variables');
+    }
+
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_EXPIRES_IN'),
+        secret: jwtSecret,
+        expiresIn: jwtExpiresIn,
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
-        expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
+        secret: jwtRefreshSecret,
+        expiresIn: jwtRefreshExpiresIn,
       }),
     ]);
 
