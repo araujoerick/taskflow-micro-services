@@ -35,7 +35,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const loadUser = async () => {
     try {
       const { data } = await api.get('/auth/me')
-      setUser(data)
+      // API returns { valid: true, user: {...} }
+      setUser(data.user || data)
     } catch (error) {
       localStorage.removeItem('accessToken')
       localStorage.removeItem('refreshToken')
@@ -51,6 +52,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('refreshToken', data.refreshToken)
 
     setUser(data.user)
+    setIsLoading(false)
   }
 
   const register = async (name: string, email: string, password: string) => {
