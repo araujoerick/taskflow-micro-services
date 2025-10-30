@@ -32,17 +32,30 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
     // Connect to WebSocket
     const accessToken = localStorage.getItem('accessToken')
-    const newSocket = io('http://localhost:3000', {
-      auth: { token: accessToken },
-      transports: ['websocket'],
+    if (!accessToken) return
+
+    const newSocket = io('/notifications', {
+      auth: {
+        token: accessToken,
+      },
+      transports: ['websocket', 'polling'],
     })
 
     newSocket.on('connect', () => {
       console.log('Connected to WebSocket')
     })
 
+    newSocket.on('connected', (data) => {
+      console.log('WebSocket authenticated:', data)
+    })
+
     newSocket.on('notification', (notification: Notification) => {
+      console.log('Received notification:', notification)
       setNotifications((prev) => [notification, ...prev])
+    })
+
+    newSocket.on('error', (error) => {
+      console.error('WebSocket error:', error)
     })
 
     newSocket.on('disconnect', () => {
