@@ -37,15 +37,8 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @UseGuards(JwtAuthGuard)
-  async refresh(
-    @Req() req: RequestWithUser,
-    @Body() refreshTokenDto: RefreshTokenDto,
-  ) {
-    return this.authService.refreshTokens(
-      req.user.id,
-      refreshTokenDto.refreshToken,
-    );
+  async refresh(@Body() refreshTokenDto: RefreshTokenDto) {
+    return this.authService.refreshTokens(refreshTokenDto.refreshToken);
   }
 
   @Get('validate')

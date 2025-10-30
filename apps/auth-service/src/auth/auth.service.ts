@@ -80,9 +80,25 @@ export class AuthService {
     };
   }
 
-  async refreshTokens(userId: string, refreshToken: string) {
+  async refreshTokens(refreshToken: string) {
+    // Decode refresh token to get userId
+    const jwtRefreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+
+    if (!jwtRefreshSecret) {
+      throw new Error('JWT Refresh configuration is missing');
+    }
+
+    let payload: JwtPayload;
+    try {
+      payload = await this.jwtService.verifyAsync(refreshToken, {
+        secret: jwtRefreshSecret,
+      });
+    } catch {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
     const user = await this.usersRepository.findOne({
-      where: { id: userId },
+      where: { id: payload.sub },
     });
 
     if (!user || !user.refreshToken) {
