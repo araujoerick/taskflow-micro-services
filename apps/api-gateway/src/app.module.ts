@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
+import { ConfigModule } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
@@ -24,11 +25,20 @@ import { NotificationsGateway } from './websocket/notifications.gateway';
 
 @Module({
   imports: [
+    // Config Module - Load .env file FIRST
+    ConfigModule.forRoot({
+      isGlobal: true,
+      envFilePath: '.env',
+    }),
+
     // Passport and JWT
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    JwtModule.register({
-      secret: environment.jwt.secret,
-      signOptions: { expiresIn: environment.jwt.expiresIn },
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: () => ({
+        secret: process.env.JWT_SECRET || 'default-secret-change-me',
+        signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '15m' },
+      }),
     }),
 
     // Rate Limiting
