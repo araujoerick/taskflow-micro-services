@@ -8,6 +8,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RabbitMQService, NotificationPayload } from './rabbitmq.service';
 import { environment } from '../config/environment';
@@ -31,11 +32,19 @@ export class NotificationsGateway
 
   private readonly logger = new Logger(NotificationsGateway.name);
   private readonly connectedUsers = new Map<string, Set<string>>(); // userId -> Set of socketIds
+  private readonly jwtSecret: string;
 
   constructor(
     private readonly jwtService: JwtService,
     private readonly rabbitmqService: RabbitMQService,
-  ) {}
+    private readonly configService: ConfigService,
+  ) {
+    const secret = configService.get<string>('JWT_SECRET');
+    if (!secret) {
+      throw new Error('JWT_SECRET must be defined in environment variables');
+    }
+    this.jwtSecret = secret;
+  }
 
   afterInit(server: Server): void {
     this.logger.log('WebSocket Gateway initialized');
@@ -46,34 +55,30 @@ export class NotificationsGateway
 
   async handleConnection(client: AuthenticatedSocket): Promise<void> {
     try {
-      // Extract token from handshake
       const token = this.extractToken(client);
       if (!token) {
         throw new UnauthorizedException('No token provided');
       }
 
-      // Verify token
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: environment.jwt.secret,
+        secret: this.jwtSecret,
       });
 
       if (!payload.sub) {
         throw new UnauthorizedException('Invalid token payload');
       }
 
-      // Store user connection
       client.userId = payload.sub;
       this.addUserConnection(payload.sub, client.id);
 
       this.logger.log(`Client connected: ${client.id} (user: ${payload.sub})`);
 
-      // Send connection success message
       client.emit('connected', {
         message: 'Successfully connected to notifications',
         userId: payload.sub,
       });
     } catch (error) {
-      this.logger.error(`Connection failed: ${error}`);
+      this.logger.error(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       client.emit('error', { message: 'Authentication failed' });
       client.disconnect();
     }
@@ -110,6 +115,13 @@ export class NotificationsGateway
   }
 
   private extractToken(client: Socket): string | null {
+    // Try to get from auth object (recommended way)
+    const auth = client.handshake.auth as { token?: string };
+    if (auth?.token) {
+      return auth.token;
+    }
+
+    // Try to get from headers
     const authHeader = client.handshake.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
       return authHeader.substring(7);

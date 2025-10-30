@@ -1,9 +1,10 @@
 import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
-import { ConfigModule } from '@nestjs/config';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import type { StringValue } from 'ms';
 import { environment } from './config/environment';
 
 // Auth
@@ -35,10 +36,22 @@ import { NotificationsGateway } from './websocket/notifications.gateway';
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
-      useFactory: () => ({
-        secret: process.env.JWT_SECRET || 'default-secret-change-me',
-        signOptions: { expiresIn: process.env.JWT_EXPIRES_IN || '15m' },
-      }),
+      inject: [ConfigService],
+      useFactory: (configService: ConfigService) => {
+        const secret = configService.get<string>('JWT_SECRET');
+        const expiresIn = configService.get<string>('JWT_EXPIRES_IN') || '15m';
+
+        if (!secret) {
+          throw new Error('JWT_SECRET must be defined in environment variables');
+        }
+
+        return {
+          secret,
+          signOptions: {
+            expiresIn: expiresIn as StringValue
+          },
+        };
+      },
     }),
 
     // Rate Limiting
