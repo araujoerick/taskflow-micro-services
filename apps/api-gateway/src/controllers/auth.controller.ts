@@ -5,7 +5,7 @@ import { environment } from '../config/environment';
 import { Public } from '../auth/public.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { User } from '../auth/user.decorator';
-import { JwtPayload } from '../auth/jwt.strategy';
+import { ValidatedUser } from '../auth/jwt.strategy';
 
 @ApiTags('Authentication')
 @Controller('auth')
@@ -67,7 +67,7 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Successfully logged out' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async logout(
-    @User() user: JwtPayload,
+    @User() user: ValidatedUser,
     @Headers('authorization') authHeader?: string,
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
@@ -86,11 +86,11 @@ export class AuthController {
   @ApiOperation({ summary: 'Validate JWT token' })
   @ApiResponse({ status: 200, description: 'Token is valid' })
   @ApiResponse({ status: 401, description: 'Invalid token' })
-  async validate(@User() user: JwtPayload): Promise<unknown> {
+  async validate(@User() user: ValidatedUser): Promise<unknown> {
     return {
       valid: true,
       user: {
-        id: user.sub,
+        id: user.userId,
         email: user.email,
       },
     };

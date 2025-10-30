@@ -7,6 +7,9 @@ import { environment } from './config/environment';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
+  // Set global prefix for all routes
+  app.setGlobalPrefix('api');
+
   // CORS
   app.enableCors({
     origin: environment.cors.origin,
@@ -35,7 +38,7 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document, {
+  SwaggerModule.setup('docs', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
       tagsSorter: 'alpha',
@@ -52,8 +55,8 @@ async function bootstrap() {
 ║                                                                ║
 ║   📍 HTTP Server:      http://localhost:${environment.port}                   ║
 ║   📡 WebSocket:        ws://localhost:${environment.port}/notifications      ║
-║   📚 API Docs:         http://localhost:${environment.port}/api/docs         ║
-║   ❤️  Health Check:     http://localhost:${environment.port}/health          ║
+║   📚 API Docs:         http://localhost:${environment.port}/docs             ║
+║   ❤️  Health Check:     http://localhost:${environment.port}/api/health      ║
 ║                                                                ║
 ║   Environment: ${environment.nodeEnv.padEnd(47)} ║
 ║                                                                ║

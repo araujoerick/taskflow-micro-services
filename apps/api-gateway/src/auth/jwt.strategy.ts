@@ -1,7 +1,7 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
+import { ConfigService } from '@nestjs/config';
 import { ExtractJwt, Strategy } from 'passport-jwt';
-import { environment } from '../config/environment';
 
 export interface JwtPayload {
   sub: string;
@@ -10,10 +10,22 @@ export interface JwtPayload {
   exp?: number;
 }
 
+// Standardized user object format used across all services
+export interface ValidatedUser {
+  userId: string;
+  email: string;
+}
+
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
-    const secret = process.env.JWT_SECRET || 'default-secret-change-me';
+  private readonly logger = new Logger(JwtStrategy.name);
+
+  constructor(private configService: ConfigService) {
+    const secret = configService.get<string>('JWT_SECRET');
+
+    if (!secret) {
+      throw new Error('JWT_SECRET must be defined in environment variables');
+    }
 
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
@@ -22,13 +34,13 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  async validate(payload: JwtPayload): Promise<JwtPayload> {
+  async validate(payload: JwtPayload): Promise<ValidatedUser> {
     if (!payload.sub || !payload.email) {
       throw new UnauthorizedException('Invalid token payload');
     }
 
     return {
-      sub: payload.sub,
+      userId: payload.sub,
       email: payload.email,
     };
   }
