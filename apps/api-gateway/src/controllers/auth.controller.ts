@@ -41,9 +41,8 @@ export class AuthController {
     );
   }
 
-  @UseGuards(JwtAuthGuard)
+  @Public()
   @Post('refresh')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Refresh access token' })
   @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
   @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
@@ -95,5 +94,22 @@ export class AuthController {
         email: user.email,
       },
     };
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get current user information' })
+  @ApiResponse({ status: 200, description: 'Current user data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async me(@Headers('authorization') authHeader?: string): Promise<unknown> {
+    const headers = authHeader ? { authorization: authHeader } : undefined;
+    return this.proxyService.proxyRequest(
+      environment.services.auth,
+      '/auth/validate',
+      'GET',
+      undefined,
+      headers,
+    );
   }
 }
