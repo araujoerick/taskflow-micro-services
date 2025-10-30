@@ -59,8 +59,8 @@ function TasksPage() {
       if (priorityFilter !== 'all') params.append('priority', priorityFilter)
 
       const { data } = await api.get<PaginatedResponse>(`/tasks?${params}`)
-      setTasks(data.tasks)
-      setTotalPages(data.totalPages)
+      setTasks(data?.tasks || [])
+      setTotalPages(data?.totalPages || 1)
     } catch (error) {
       console.error('Failed to fetch tasks:', error)
     } finally {
@@ -174,7 +174,7 @@ function TasksPage() {
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
               <p className="mt-4 text-[var(--color-muted-foreground)]">Loading tasks...</p>
             </div>
-          ) : tasks.length === 0 ? (
+          ) : !tasks || tasks.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
                 <p className="text-[var(--color-muted-foreground)]">
