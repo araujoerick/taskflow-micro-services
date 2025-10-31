@@ -5,10 +5,27 @@ import { Layout } from '@/components/Layout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Select } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Plus, Search } from 'lucide-react'
 import api from '@/lib/api'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/tasks')({
   component: TasksPage,
@@ -42,6 +59,15 @@ function TasksPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [showCreateModal, setShowCreateModal] = useState(false)
 
+  // New task form state
+  const [newTask, setNewTask] = useState({
+    title: '',
+    description: '',
+    status: 'pending' as Task['status'],
+    priority: 'medium' as Task['priority'],
+  })
+  const [creating, setCreating] = useState(false)
+
   useEffect(() => {
     fetchTasks()
   }, [page, statusFilter, priorityFilter, search])
@@ -63,8 +89,41 @@ function TasksPage() {
       setTotalPages(data?.totalPages || 1)
     } catch (error) {
       console.error('Failed to fetch tasks:', error)
+      toast.error('Failed to load tasks')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleCreateTask = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!newTask.title.trim()) {
+      toast.error('Please enter a task title')
+      return
+    }
+
+    try {
+      setCreating(true)
+      await api.post('/tasks', newTask)
+
+      // Reset form and close modal
+      setNewTask({
+        title: '',
+        description: '',
+        status: 'pending',
+        priority: 'medium',
+      })
+      setShowCreateModal(false)
+
+      // Refresh tasks list
+      await fetchTasks()
+      toast.success('Task created successfully!')
+    } catch (error) {
+      console.error('Failed to create task:', error)
+      toast.error('Failed to create task. Please try again.')
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -134,7 +193,8 @@ function TasksPage() {
                   />
                 </div>
 
-                <Select
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
@@ -142,9 +202,10 @@ function TasksPage() {
                   <option value="pending">Pending</option>
                   <option value="in_progress">In Progress</option>
                   <option value="completed">Completed</option>
-                </Select>
+                </select>
 
-                <Select
+                <select
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
                   value={priorityFilter}
                   onChange={(e) => setPriorityFilter(e.target.value)}
                 >
@@ -152,7 +213,7 @@ function TasksPage() {
                   <option value="low">Low</option>
                   <option value="medium">Medium</option>
                   <option value="high">High</option>
-                </Select>
+                </select>
 
                 <Button
                   variant="outline"
@@ -185,7 +246,7 @@ function TasksPage() {
           ) : (
             <div className="space-y-4">
               {tasks.map((task) => (
-                <Link key={task.id} to={`/tasks/${task.id}`}>
+                <Link key={task.id} to="/tasks/$taskId" params={{ taskId: task.id }}>
                   <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardHeader>
                       <div className="flex items-start justify-between">
@@ -229,6 +290,97 @@ function TasksPage() {
             </div>
           )}
         </div>
+
+        <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Create New Task</DialogTitle>
+              <DialogDescription>
+                Add a new task to your list. Fill in the details below.
+              </DialogDescription>
+            </DialogHeader>
+
+            <form onSubmit={handleCreateTask}>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Enter task title"
+                    value={newTask.title}
+                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="description">Description</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Enter task description"
+                    value={newTask.description}
+                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                    rows={4}
+                  />
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="status">Status</Label>
+                    <Select
+                      value={newTask.status}
+                      onValueChange={(value) =>
+                        setNewTask({ ...newTask, status: value as Task['status'] })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="priority">Priority</Label>
+                    <Select
+                      value={newTask.priority}
+                      onValueChange={(value) =>
+                        setNewTask({ ...newTask, priority: value as Task['priority'] })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
+
+              <DialogFooter className="mt-6">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowCreateModal(false)}
+                  disabled={creating}
+                >
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={creating}>
+                  {creating ? 'Creating...' : 'Create Task'}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </Layout>
     </ProtectedRoute>
   )
