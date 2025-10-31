@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -25,9 +26,12 @@ function LoginPage() {
 
     try {
       await login(email, password)
+      toast.success('Welcome back!')
       navigate({ to: '/tasks' })
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to login')
+      const errorMsg = err.response?.data?.message || 'Failed to login'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setIsLoading(false)
     }
