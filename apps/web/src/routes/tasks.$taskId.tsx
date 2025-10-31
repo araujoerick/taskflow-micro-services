@@ -2,14 +2,21 @@ import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { Layout } from '@/components/Layout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Select } from '@/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { ArrowLeft, MessageSquare, Clock, Edit, Trash2 } from 'lucide-react'
 import api from '@/lib/api'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/tasks/$taskId')({
   component: TaskDetailsPage,
@@ -75,6 +82,7 @@ function TaskDetailsPage() {
       setHistory(historyRes.data)
     } catch (error) {
       console.error('Failed to fetch task details:', error)
+      toast.error('Failed to load task details')
     } finally {
       setLoading(false)
     }
@@ -82,11 +90,13 @@ function TaskDetailsPage() {
 
   const handleUpdateTask = async () => {
     try {
-      await api.put(`/tasks/${taskId}`, editedTask)
+      await api.patch(`/tasks/${taskId}`, editedTask)
       await fetchTaskDetails()
       setEditMode(false)
+      toast.success('Task updated successfully!')
     } catch (error) {
       console.error('Failed to update task:', error)
+      toast.error('Failed to update task')
     }
   }
 
@@ -95,9 +105,11 @@ function TaskDetailsPage() {
 
     try {
       await api.delete(`/tasks/${taskId}`)
+      toast.success('Task deleted successfully!')
       navigate({ to: '/tasks' })
     } catch (error) {
       console.error('Failed to delete task:', error)
+      toast.error('Failed to delete task')
     }
   }
 
@@ -109,8 +121,10 @@ function TaskDetailsPage() {
       await api.post(`/tasks/${taskId}/comments`, { content: newComment })
       setNewComment('')
       await fetchTaskDetails()
+      toast.success('Comment added successfully!')
     } catch (error) {
       console.error('Failed to add comment:', error)
+      toast.error('Failed to add comment')
     }
   }
 
@@ -246,13 +260,18 @@ function TaskDetailsPage() {
                       <label className="text-sm font-medium">Status</label>
                       <Select
                         value={editedTask.status}
-                        onChange={(e) =>
-                          setEditedTask({ ...editedTask, status: e.target.value as Task['status'] })
+                        onValueChange={(value) =>
+                          setEditedTask({ ...editedTask, status: value as Task['status'] })
                         }
                       >
-                        <option value="pending">Pending</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
                       </Select>
                     </div>
 
@@ -260,16 +279,21 @@ function TaskDetailsPage() {
                       <label className="text-sm font-medium">Priority</label>
                       <Select
                         value={editedTask.priority}
-                        onChange={(e) =>
+                        onValueChange={(value) =>
                           setEditedTask({
                             ...editedTask,
-                            priority: e.target.value as Task['priority'],
+                            priority: value as Task['priority'],
                           })
                         }
                       >
-                        <option value="low">Low</option>
-                        <option value="medium">Medium</option>
-                        <option value="high">High</option>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                        </SelectContent>
                       </Select>
                     </div>
                   </div>
