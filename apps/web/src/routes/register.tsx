@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { toast } from 'sonner'
 
 export const Route = createFileRoute('/register')({
   component: RegisterPage,
@@ -25,12 +26,16 @@ function RegisterPage() {
     setError('')
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match')
+      const errorMsg = 'Passwords do not match'
+      setError(errorMsg)
+      toast.error(errorMsg)
       return
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters')
+      const errorMsg = 'Password must be at least 6 characters'
+      setError(errorMsg)
+      toast.error(errorMsg)
       return
     }
 
@@ -38,9 +43,12 @@ function RegisterPage() {
 
     try {
       await register(name, email, password)
+      toast.success('Account created successfully!')
       navigate({ to: '/tasks' })
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to register')
+      const errorMsg = err.response?.data?.message || 'Failed to register'
+      setError(errorMsg)
+      toast.error(errorMsg)
     } finally {
       setIsLoading(false)
     }
