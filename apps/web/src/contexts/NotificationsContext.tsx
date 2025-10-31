@@ -24,7 +24,7 @@ const NotificationsContext = createContext<NotificationsContextType | undefined>
 
 export function NotificationsProvider({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated } = useAuth()
-  const [socket, setSocket] = useState<Socket | null>(null)
+  const [, setSocket] = useState<Socket | null>(null)
   const [notifications, setNotifications] = useState<Notification[]>([])
 
   useEffect(() => {
