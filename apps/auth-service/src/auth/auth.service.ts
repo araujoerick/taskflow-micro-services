@@ -3,6 +3,7 @@ import {
   ConflictException,
   UnauthorizedException,
   NotFoundException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -18,6 +19,8 @@ import { JwtPayload } from './interfaces/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
+  private readonly logger = new Logger(AuthService.name);
+
   constructor(
     @InjectRepository(User)
     private usersRepository: Repository<User>,
@@ -33,6 +36,7 @@ export class AuthService {
     });
 
     if (existingUser) {
+      this.logger.warn(`Registration attempt with existing email: ${email}`);
       throw new ConflictException('Email already exists');
     }
 
@@ -45,6 +49,8 @@ export class AuthService {
     });
 
     await this.usersRepository.save(user);
+
+    this.logger.log(`New user registered: ${user.id} (${email})`);
 
     const tokens = await this.generateTokens(user);
     await this.updateRefreshToken(user.id, tokens.tokenId);
@@ -64,14 +70,18 @@ export class AuthService {
     });
 
     if (!user) {
+      this.logger.warn(`Failed login attempt for email: ${email}`);
       throw new UnauthorizedException('Invalid credentials');
     }
 
     const isPasswordValid = await bcrypt.compare(password, user.password);
 
     if (!isPasswordValid) {
+      this.logger.warn(`Failed login attempt for user: ${user.id}`);
       throw new UnauthorizedException('Invalid credentials');
     }
+
+    this.logger.log(`User ${user.id} logged in successfully`);
 
     const tokens = await this.generateTokens(user);
     await this.updateRefreshToken(user.id, tokens.tokenId);
