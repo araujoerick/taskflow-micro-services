@@ -10,6 +10,7 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import type { StringValue } from 'ms';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { User } from '../users/entities/user.entity';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
@@ -46,11 +47,12 @@ export class AuthService {
     await this.usersRepository.save(user);
 
     const tokens = await this.generateTokens(user);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    await this.updateRefreshToken(user.id, tokens.tokenId);
 
     return {
       user: this.sanitizeUser(user),
-      ...tokens,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
   }
 
@@ -72,17 +74,18 @@ export class AuthService {
     }
 
     const tokens = await this.generateTokens(user);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    await this.updateRefreshToken(user.id, tokens.tokenId);
 
     return {
       user: this.sanitizeUser(user),
-      ...tokens,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
   }
 
   async refreshTokens(refreshToken: string) {
-    // Decode refresh token to get userId
-    const jwtRefreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
+    const jwtRefreshSecret =
+      this.configService.get<string>('JWT_REFRESH_SECRET');
 
     if (!jwtRefreshSecret) {
       throw new Error('JWT Refresh configuration is missing');
@@ -101,25 +104,26 @@ export class AuthService {
       where: { id: payload.sub },
     });
 
-    if (!user || !user.refreshToken) {
+    if (!user) {
       throw new UnauthorizedException('Access denied');
     }
 
-    const isRefreshTokenValid = await bcrypt.compare(
-      refreshToken,
-      user.refreshToken,
-    );
+    // Check if token was revoked (logout support)
+    if (!user.refreshTokenId) {
+      throw new UnauthorizedException('Token has been revoked');
+    }
 
-    if (!isRefreshTokenValid) {
-      throw new UnauthorizedException('Invalid refresh token');
+    if (payload.jti !== user.refreshTokenId) {
+      throw new UnauthorizedException('Token has been revoked');
     }
 
     const tokens = await this.generateTokens(user);
-    await this.updateRefreshToken(user.id, tokens.refreshToken);
+    await this.updateRefreshToken(user.id, tokens.tokenId);
 
     return {
       user: this.sanitizeUser(user),
-      ...tokens,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
     };
   }
 
@@ -136,21 +140,37 @@ export class AuthService {
   }
 
   async logout(userId: string) {
-    await this.usersRepository.update(userId, { refreshToken: undefined });
+    // Use query builder to explicitly set NULL
+    await this.usersRepository
+      .createQueryBuilder()
+      .update()
+      .set({ refreshTokenId: () => 'NULL' })
+      .where('id = :id', { id: userId })
+      .execute();
+
     return { message: 'Logged out successfully' };
   }
 
   private async generateTokens(user: User) {
-    const payload = {
+    // Generate unique token ID for revocation support
+    const tokenId = crypto.randomUUID();
+
+    const payload: JwtPayload = {
       sub: user.id,
       email: user.email,
+      jti: tokenId,
     };
 
-    const jwtRefreshSecret = this.configService.get<string>('JWT_REFRESH_SECRET');
-    const jwtRefreshExpiresIn = this.configService.get<string>('JWT_REFRESH_EXPIRES_IN');
+    const jwtRefreshSecret =
+      this.configService.get<string>('JWT_REFRESH_SECRET');
+    const jwtRefreshExpiresIn = this.configService.get<string>(
+      'JWT_REFRESH_EXPIRES_IN',
+    );
 
     if (!jwtRefreshSecret || !jwtRefreshExpiresIn) {
-      throw new Error('JWT Refresh configuration is missing in environment variables');
+      throw new Error(
+        'JWT Refresh configuration is missing in environment variables',
+      );
     }
 
     // Access token usa a configuração global do JwtModule
@@ -165,19 +185,20 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
+      tokenId,
     };
   }
 
-  private async updateRefreshToken(userId: string, refreshToken: string) {
-    const hashedRefreshToken = await bcrypt.hash(refreshToken, 10);
+  private async updateRefreshToken(userId: string, tokenId: string) {
+    // Store only the token ID for revocation purposes (no need to hash JWT)
     await this.usersRepository.update(userId, {
-      refreshToken: hashedRefreshToken,
+      refreshTokenId: tokenId,
     });
   }
 
   private sanitizeUser(user: User) {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, refreshToken, ...result } = user;
+    const { password, refreshTokenId, ...result } = user;
     return result;
   }
 }
