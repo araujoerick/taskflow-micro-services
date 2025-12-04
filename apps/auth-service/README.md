@@ -1,98 +1,286 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Auth Service
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Microservice for authentication and authorization with JWT.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Technologies
 
-## Description
+- NestJS 11
+- TypeORM 0.3.27
+- PostgreSQL
+- bcrypt 6.0.0
+- JWT
+- Zod (environment validation)
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Setup
 
-## Project setup
+### 1. Configure environment variables
 
 ```bash
-$ npm install
+cp .env.example .env
+# Edit .env with real values
 ```
 
-## Compile and run the project
+**IMPORTANT**: Generate secure secrets:
+```bash
+openssl rand -base64 32  # For JWT_SECRET
+openssl rand -base64 32  # For JWT_REFRESH_SECRET
+```
+
+### 2. Install dependencies
 
 ```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
+npm install
 ```
 
-## Run tests
+### 3. Run migrations
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run migration:run
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 4. Start service
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+npm run start:dev
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Endpoints
 
-## Resources
+### POST /auth/register
+Register a new user.
 
-Check out a few resources that may come in handy when working with NestJS:
+**Body:**
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "SecureP@ss123"
+}
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+**Password requirements:**
+- Minimum 8 characters
+- 1 uppercase letter
+- 1 lowercase letter
+- 1 number
+- 1 special character (@$!%*?&)
 
-## Support
+**Response:**
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+### POST /auth/login
+Authenticate user and return tokens.
 
-## Stay in touch
+**Body:**
+```json
+{
+  "email": "john@example.com",
+  "password": "SecureP@ss123"
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+**Response:** Same as register
 
-## License
+### POST /auth/refresh
+Renew access token using refresh token.
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+**Body:**
+```json
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+**Response:**
+```json
+{
+  "user": {
+    "id": "uuid",
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
+  "accessToken": "new-access-token",
+  "refreshToken": "new-refresh-token"
+}
+```
+
+### POST /auth/logout
+Invalidate user's refresh token.
+
+**Headers:**
+```
+Authorization: Bearer <access-token>
+```
+
+**Response:**
+```json
+{
+  "message": "Logged out successfully"
+}
+```
+
+### GET /auth/validate
+Validate access token (internal use).
+
+**Headers:**
+```
+Authorization: Bearer <access-token>
+```
+
+**Response:**
+```json
+{
+  "valid": true,
+  "user": {
+    "id": "uuid",
+    "email": "john@example.com"
+  }
+}
+```
+
+## Security Features
+
+- ✅ Passwords hashed with bcrypt (10 rounds)
+- ✅ JWT with short expiration (15min)
+- ✅ Refresh tokens with long expiration (7 days)
+- ✅ Token revocation via JTI (JWT ID)
+- ✅ Strong password validation
+- ✅ Email normalization (lowercase, trim)
+- ✅ Environment variables validated with Zod
+- ✅ Audit logging for authentication events
+
+## Migrations
+
+```bash
+# Generate new migration
+npm run migration:generate -- src/migrations/MigrationName
+
+# Run migrations
+npm run migration:run
+
+# Revert last migration
+npm run migration:revert
+```
+
+**NEVER use `synchronize: true` in production!**
+
+## Development
+
+### Running tests
+
+```bash
+# Unit tests
+npm test
+
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:cov
+
+# E2E tests
+npm run test:e2e
+```
+
+### Logging
+
+The service uses NestJS Logger for structured logging:
+
+- **INFO**: Successful operations (user registration, login)
+- **WARN**: Failed authentication attempts
+- **ERROR**: System errors
+
+Example logs:
+```
+[Bootstrap] Auth service running on port 3001
+[Bootstrap] Environment: development
+[AuthService] New user registered: abc-123 (user@example.com)
+[AuthService] User abc-123 logged in successfully
+[AuthService] Failed login attempt for email: wrong@example.com
+```
+
+## Architecture
+
+```
+apps/auth-service/
+├── src/
+│   ├── auth/
+│   │   ├── dto/
+│   │   │   ├── register.dto.ts
+│   │   │   ├── login.dto.ts
+│   │   │   └── refresh-token.dto.ts
+│   │   ├── guards/
+│   │   │   └── jwt-auth.guard.ts
+│   │   ├── strategies/
+│   │   │   └── jwt.strategy.ts
+│   │   ├── interfaces/
+│   │   │   └── jwt-payload.interface.ts
+│   │   ├── validators/
+│   │   │   └── password.validator.ts
+│   │   ├── auth.controller.ts
+│   │   ├── auth.service.ts
+│   │   └── auth.module.ts
+│   ├── users/
+│   │   └── entities/
+│   │       └── user.entity.ts
+│   ├── config/
+│   │   ├── typeorm.config.ts
+│   │   └── env.validation.ts
+│   ├── migrations/
+│   ├── app.module.ts
+│   └── main.ts
+└── test/
+    └── auth.e2e-spec.ts
+```
+
+## Environment Variables
+
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| NODE_ENV | No | development | Environment (development, production, test) |
+| PORT | No | 3001 | Service port |
+| DB_HOST | Yes | - | Database host |
+| DB_PORT | No | 5432 | Database port |
+| DB_USERNAME | Yes | - | Database username |
+| DB_PASSWORD | Yes | - | Database password |
+| DB_DATABASE | Yes | - | Database name |
+| JWT_SECRET | Yes | - | JWT secret (min 32 chars) |
+| JWT_EXPIRES_IN | No | 15m | Access token expiration |
+| JWT_REFRESH_SECRET | Yes | - | Refresh token secret (min 32 chars) |
+| JWT_REFRESH_EXPIRES_IN | No | 7d | Refresh token expiration |
+| CORS_ORIGIN | No | * | CORS allowed origins |
+
+## Troubleshooting
+
+### Error: Environment validation failed
+
+Make sure all required environment variables are set and JWT secrets have at least 32 characters.
+
+### Error: Cannot connect to database
+
+Check if PostgreSQL is running and credentials in `.env` are correct.
+
+### Token expired error
+
+Access tokens expire after 15 minutes. Use the refresh token endpoint to get a new access token.
+
+### Password validation fails
+
+Ensure password meets all requirements:
+- At least 8 characters
+- 1 uppercase letter
+- 1 lowercase letter
+- 1 number
+- 1 special character (@$!%*?&)
