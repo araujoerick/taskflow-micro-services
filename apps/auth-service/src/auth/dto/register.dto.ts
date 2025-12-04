@@ -12,12 +12,12 @@ export class RegisterDto {
   @IsString()
   @IsNotEmpty()
   @MaxLength(100)
-  @Transform(({ value }) => value?.trim())
+  @Transform(({ value }: { value: string }) => value?.trim())
   name: string;
 
   @IsEmail()
   @IsNotEmpty()
-  @Transform(({ value }) => value?.toLowerCase().trim())
+  @Transform(({ value }: { value: string }) => value?.toLowerCase().trim())
   email: string;
 
   @IsString()
