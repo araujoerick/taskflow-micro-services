@@ -21,7 +21,9 @@ import { JwtStrategy } from './strategies/jwt.strategy';
         const expiresIn = configService.get<string>('JWT_EXPIRES_IN');
 
         if (!secret || !expiresIn) {
-          throw new Error('JWT_SECRET and JWT_EXPIRES_IN must be defined in environment variables');
+          throw new Error(
+            'JWT_SECRET and JWT_EXPIRES_IN must be defined in environment variables',
+          );
         }
 
         return {
