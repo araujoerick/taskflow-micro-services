@@ -1,7 +1,14 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
-import * as amqp from 'amqplib';
+import { Injectable, Logger } from '@nestjs/common';
+import { EventPattern, Payload, Ctx, RmqContext } from '@nestjs/microservices';
+import { Channel, Message } from 'amqplib';
 import { NotificationsService } from '../notifications/notifications.service';
+import type {
+  TaskEventPayload,
+  TaskCreatedData,
+  TaskUpdatedData,
+  TaskAssignedData,
+  TaskCommentedData,
+} from './interfaces/task-event.interface';
 
 export enum TaskEvent {
   TASK_CREATED = 'task.created',
@@ -11,103 +18,155 @@ export enum TaskEvent {
   TASK_COMMENTED = 'task.commented',
 }
 
-export interface TaskEventPayload {
-  event: TaskEvent;
-  taskId: string;
-  userId: string;
-  data: any;
-  timestamp: Date;
-}
+// Re-export for backward compatibility
+export type { TaskEventPayload };
 
+/**
+ * RabbitMQ Service - Handles task events from the message queue
+ * Uses NestJS native microservices
+ */
 @Injectable()
-export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
-  private connection: amqp.Connection | null = null;
-  private channel: amqp.Channel | null = null;
+export class RabbitMQService {
   private readonly logger = new Logger(RabbitMQService.name);
-  private readonly queueName: string;
 
-  constructor(
-    private configService: ConfigService,
-    private notificationsService: NotificationsService,
-  ) {
-    this.queueName = this.configService.get<string>('RABBITMQ_QUEUE') || 'task-events';
-  }
+  constructor(private readonly notificationsService: NotificationsService) {}
 
-  async onModuleInit() {
+  /**
+   * Handles TASK_CREATED events
+   * @EventPattern decorator automatically subscribes to the pattern
+   */
+  @EventPattern(TaskEvent.TASK_CREATED)
+  async handleTaskCreated(
+    @Payload() payload: TaskEventPayload<TaskCreatedData>,
+    @Ctx() context: RmqContext,
+  ): Promise<void> {
+    this.logger.log(
+      `Received ${TaskEvent.TASK_CREATED} for task ${payload.taskId}`,
+    );
+
     try {
-      const rabbitmqUrl = this.configService.get<string>('RABBITMQ_URL');
-      if (!rabbitmqUrl) {
-        throw new Error('RABBITMQ_URL is not defined');
-      }
+      await this.notificationsService.createTaskCreatedNotification(payload);
 
-      const connection = await amqp.connect(rabbitmqUrl);
-      this.connection = connection as any;
-      const channel = await connection.createChannel();
-      this.channel = channel as any;
-      await channel.assertQueue(this.queueName, { durable: true });
-
-      // Set prefetch to 1 to ensure fair distribution of messages
-      await channel.prefetch(1);
-
-      this.logger.log(`Connected to RabbitMQ and consuming from queue "${this.queueName}"`);
-
-      // Start consuming messages
-      await channel.consume(
-        this.queueName,
-        async (msg) => {
-          if (msg) {
-            try {
-              const payload: TaskEventPayload = JSON.parse(msg.content.toString());
-              this.logger.log(`Received event: ${payload.event} for task ${payload.taskId}`);
-
-              await this.handleTaskEvent(payload);
-
-              // Acknowledge the message
-              channel.ack(msg);
-            } catch (error) {
-              this.logger.error('Error processing message', error);
-              // Reject and requeue the message
-              channel.nack(msg, false, true);
-            }
-          }
-        },
-        { noAck: false }
-      );
+      // Manual acknowledgment for reliability
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.ack(originalMsg);
     } catch (error) {
-      this.logger.error('Failed to connect to RabbitMQ', error);
+      this.logger.error(`Error processing ${TaskEvent.TASK_CREATED}`, error);
+
+      // Nack and requeue on error
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.nack(originalMsg, false, true);
     }
   }
 
-  async onModuleDestroy() {
+  /**
+   * Handles TASK_UPDATED events
+   */
+  @EventPattern(TaskEvent.TASK_UPDATED)
+  async handleTaskUpdated(
+    @Payload() payload: TaskEventPayload<TaskUpdatedData>,
+    @Ctx() context: RmqContext,
+  ): Promise<void> {
+    this.logger.log(
+      `Received ${TaskEvent.TASK_UPDATED} for task ${payload.taskId}`,
+    );
+
     try {
-      if (this.channel) {
-        await (this.channel as any).close();
-      }
-      if (this.connection) {
-        await (this.connection as any).close();
-      }
-      this.logger.log('RabbitMQ connection closed');
+      await this.notificationsService.createTaskUpdatedNotification(payload);
+
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.ack(originalMsg);
     } catch (error) {
-      this.logger.error('Error closing RabbitMQ connection', error);
+      this.logger.error(`Error processing ${TaskEvent.TASK_UPDATED}`, error);
+
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.nack(originalMsg, false, true);
     }
   }
 
-  private async handleTaskEvent(payload: TaskEventPayload) {
-    switch (payload.event) {
-      case TaskEvent.TASK_CREATED:
-        await this.notificationsService.createTaskCreatedNotification(payload);
-        break;
-      case TaskEvent.TASK_UPDATED:
-        await this.notificationsService.createTaskUpdatedNotification(payload);
-        break;
-      case TaskEvent.TASK_ASSIGNED:
-        await this.notificationsService.createTaskAssignedNotification(payload);
-        break;
-      case TaskEvent.TASK_COMMENTED:
-        await this.notificationsService.createTaskCommentedNotification(payload);
-        break;
-      default:
-        this.logger.warn(`Unknown event type: ${payload.event}`);
+  /**
+   * Handles TASK_ASSIGNED events
+   */
+  @EventPattern(TaskEvent.TASK_ASSIGNED)
+  async handleTaskAssigned(
+    @Payload() payload: TaskEventPayload<TaskAssignedData>,
+    @Ctx() context: RmqContext,
+  ): Promise<void> {
+    this.logger.log(
+      `Received ${TaskEvent.TASK_ASSIGNED} for task ${payload.taskId}`,
+    );
+
+    try {
+      await this.notificationsService.createTaskAssignedNotification(payload);
+
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.ack(originalMsg);
+    } catch (error) {
+      this.logger.error(`Error processing ${TaskEvent.TASK_ASSIGNED}`, error);
+
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.nack(originalMsg, false, true);
+    }
+  }
+
+  /**
+   * Handles TASK_COMMENTED events
+   */
+  @EventPattern(TaskEvent.TASK_COMMENTED)
+  async handleTaskCommented(
+    @Payload() payload: TaskEventPayload<TaskCommentedData>,
+    @Ctx() context: RmqContext,
+  ): Promise<void> {
+    this.logger.log(
+      `Received ${TaskEvent.TASK_COMMENTED} for task ${payload.taskId}`,
+    );
+
+    try {
+      await this.notificationsService.createTaskCommentedNotification(payload);
+
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.ack(originalMsg);
+    } catch (error) {
+      this.logger.error(`Error processing ${TaskEvent.TASK_COMMENTED}`, error);
+
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.nack(originalMsg, false, true);
+    }
+  }
+
+  /**
+   * Handles TASK_DELETED events
+   * Marks all notifications related to the deleted task as obsolete
+   */
+  @EventPattern(TaskEvent.TASK_DELETED)
+  async handleTaskDeleted(
+    @Payload() payload: TaskEventPayload,
+    @Ctx() context: RmqContext,
+  ): Promise<void> {
+    this.logger.log(
+      `Received ${TaskEvent.TASK_DELETED} for task ${payload.taskId}`,
+    );
+
+    try {
+      await this.notificationsService.handleTaskDeleted(payload);
+
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.ack(originalMsg);
+    } catch (error) {
+      this.logger.error(`Error processing ${TaskEvent.TASK_DELETED}`, error);
+
+      const channel = context.getChannelRef() as Channel;
+      const originalMsg = context.getMessage() as Message;
+      channel.nack(originalMsg, false, true);
     }
   }
 }
