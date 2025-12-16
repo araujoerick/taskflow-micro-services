@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   Index,
 } from 'typeorm';
+import { NotificationMetadata } from '../interfaces/notification-metadata.interface';
 
 export enum NotificationType {
   TASK_CREATED = 'TASK_CREATED',
@@ -38,7 +39,7 @@ export class Notification {
   taskId: string;
 
   @Column('jsonb', { nullable: true })
-  metadata: Record<string, any>;
+  metadata: NotificationMetadata | null;
 
   @Column({ default: false })
   read: boolean;

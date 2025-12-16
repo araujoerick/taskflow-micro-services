@@ -1,6 +1,8 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class CreateNotificationsTable1761702700000 implements MigrationInterface {
+export class CreateNotificationsTable1761702700000
+  implements MigrationInterface
+{
   public async up(queryRunner: QueryRunner): Promise<void> {
     // Create enum type for notification types
     await queryRunner.query(`
