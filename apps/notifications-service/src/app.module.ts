@@ -3,18 +3,20 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { PassportModule } from '@nestjs/passport';
 import { JwtModule } from '@nestjs/jwt';
-import type { StringValue } from 'ms';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { NotificationsModule } from './notifications/notifications.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { HealthModule } from './health/health.module';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
+import { validate } from './config/env.validation';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate,
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
@@ -39,17 +41,20 @@ import { JwtStrategy } from './auth/strategies/jwt.strategy';
         const secret = configService.get<string>('JWT_SECRET');
 
         if (!secret) {
-          throw new Error('JWT_SECRET must be defined in environment variables');
+          throw new Error(
+            'JWT_SECRET must be defined in environment variables',
+          );
         }
 
         return {
           secret,
-          signOptions: { expiresIn: '15m' as StringValue },
+          signOptions: { expiresIn: '15m' },
         };
       },
     }),
     NotificationsModule,
     RabbitMQModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [AppService, JwtStrategy],
