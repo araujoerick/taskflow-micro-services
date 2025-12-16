@@ -4,7 +4,13 @@ import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
 import { FilterNotificationDto } from './dto/filter-notification.dto';
 import { MarkAsReadDto } from './dto/mark-as-read.dto';
-import { TaskEventPayload } from '../rabbitmq/rabbitmq.service';
+import type {
+  TaskEventPayload,
+  TaskCreatedData,
+  TaskUpdatedData,
+  TaskAssignedData,
+  TaskCommentedData,
+} from '../rabbitmq/interfaces/task-event.interface';
 
 @Injectable()
 export class NotificationsService {
@@ -15,7 +21,9 @@ export class NotificationsService {
     private notificationRepository: Repository<Notification>,
   ) {}
 
-  async createTaskCreatedNotification(payload: TaskEventPayload) {
+  async createTaskCreatedNotification(
+    payload: TaskEventPayload<TaskCreatedData>,
+  ) {
     const { taskId, userId, data } = payload;
 
     // Notify task creator (if needed) and other interested users
@@ -38,7 +46,9 @@ export class NotificationsService {
     return notification;
   }
 
-  async createTaskUpdatedNotification(payload: TaskEventPayload) {
+  async createTaskUpdatedNotification(
+    payload: TaskEventPayload<TaskUpdatedData>,
+  ) {
     const { taskId, userId, data } = payload;
 
     // Notify assignee and creator if they're different from the updater
@@ -52,32 +62,41 @@ export class NotificationsService {
       usersToNotify.add(data.createdById);
     }
 
-    const notifications: Notification[] = [];
-    for (const targetUserId of usersToNotify) {
-      const notification = this.notificationRepository.create({
-        userId: targetUserId,
-        type: NotificationType.TASK_UPDATED,
-        message: `Task "${data.title}" has been updated`,
-        taskId,
-        metadata: {
-          taskTitle: data.title,
-          changes: data.changes || {},
-          updatedBy: userId,
-        },
-      });
-
-      notifications.push(notification);
+    if (usersToNotify.size === 0) {
+      return [];
     }
 
-    if (notifications.length > 0) {
-      await this.notificationRepository.save(notifications);
-      this.logger.log(`Created ${notifications.length} TASK_UPDATED notifications`);
-    }
+    // Use transaction for batch insert to ensure atomicity
+    return await this.notificationRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        const notifications: Notification[] = [];
 
-    return notifications;
+        for (const targetUserId of usersToNotify) {
+          const notification = this.notificationRepository.create({
+            userId: targetUserId,
+            type: NotificationType.TASK_UPDATED,
+            message: `Task "${data.title}" has been updated`,
+            taskId,
+            metadata: {
+              taskTitle: data.title,
+              changes: data.changes || {},
+              updatedBy: userId,
+            },
+          });
+
+          notifications.push(notification);
+        }
+
+        const saved = await transactionalEntityManager.save(notifications);
+        this.logger.log(`Created ${saved.length} TASK_UPDATED notifications`);
+        return saved;
+      },
+    );
   }
 
-  async createTaskAssignedNotification(payload: TaskEventPayload) {
+  async createTaskAssignedNotification(
+    payload: TaskEventPayload<TaskAssignedData>,
+  ) {
     const { taskId, userId, data } = payload;
 
     // Notify the assignee (if not self-assignment)
@@ -96,7 +115,9 @@ export class NotificationsService {
       });
 
       await this.notificationRepository.save(notification);
-      this.logger.log(`Created TASK_ASSIGNED notification for user ${data.assignedToId}`);
+      this.logger.log(
+        `Created TASK_ASSIGNED notification for user ${data.assignedToId}`,
+      );
 
       return notification;
     }
@@ -104,7 +125,9 @@ export class NotificationsService {
     return null;
   }
 
-  async createTaskCommentedNotification(payload: TaskEventPayload) {
+  async createTaskCommentedNotification(
+    payload: TaskEventPayload<TaskCommentedData>,
+  ) {
     const { taskId, userId, data } = payload;
 
     // Notify task creator and assignee (if they're not the commenter)
@@ -118,29 +141,36 @@ export class NotificationsService {
       usersToNotify.add(data.createdById);
     }
 
-    const notifications: Notification[] = [];
-    for (const targetUserId of usersToNotify) {
-      const notification = this.notificationRepository.create({
-        userId: targetUserId,
-        type: NotificationType.TASK_COMMENTED,
-        message: `New comment on task "${data.title}"`,
-        taskId,
-        metadata: {
-          taskTitle: data.title,
-          commentId: data.commentId,
-          commentedBy: userId,
-        },
-      });
-
-      notifications.push(notification);
+    if (usersToNotify.size === 0) {
+      return [];
     }
 
-    if (notifications.length > 0) {
-      await this.notificationRepository.save(notifications);
-      this.logger.log(`Created ${notifications.length} TASK_COMMENTED notifications`);
-    }
+    // Use transaction for batch insert to ensure atomicity
+    return await this.notificationRepository.manager.transaction(
+      async (transactionalEntityManager) => {
+        const notifications: Notification[] = [];
 
-    return notifications;
+        for (const targetUserId of usersToNotify) {
+          const notification = this.notificationRepository.create({
+            userId: targetUserId,
+            type: NotificationType.TASK_COMMENTED,
+            message: `New comment on task "${data.title}"`,
+            taskId,
+            metadata: {
+              taskTitle: data.title,
+              commentId: data.commentId,
+              commentedBy: userId,
+            },
+          });
+
+          notifications.push(notification);
+        }
+
+        const saved = await transactionalEntityManager.save(notifications);
+        this.logger.log(`Created ${saved.length} TASK_COMMENTED notifications`);
+        return saved;
+      },
+    );
   }
 
   async findAll(userId: string, filters: FilterNotificationDto) {
@@ -198,7 +228,9 @@ export class NotificationsService {
       .andWhere('userId = :userId', { userId })
       .execute();
 
-    this.logger.log(`Marked ${result.affected} notifications as read for user ${userId}`);
+    this.logger.log(
+      `Marked ${result.affected} notifications as read for user ${userId}`,
+    );
 
     return {
       message: `${result.affected} notification(s) marked as read`,
@@ -229,5 +261,26 @@ export class NotificationsService {
     });
 
     return { count };
+  }
+
+  /**
+   * Mark notifications related to a deleted task as obsolete
+   * This updates the metadata to indicate the task was deleted
+   */
+  async handleTaskDeleted(payload: TaskEventPayload): Promise<void> {
+    const { taskId } = payload;
+
+    const result = await this.notificationRepository
+      .createQueryBuilder()
+      .update(Notification)
+      .set({
+        metadata: () => `metadata || '{"taskDeleted": true}'::jsonb`,
+      })
+      .where('taskId = :taskId', { taskId })
+      .execute();
+
+    this.logger.log(
+      `Marked ${result.affected || 0} notifications as obsolete for deleted task ${taskId}`,
+    );
   }
 }
