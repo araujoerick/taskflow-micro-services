@@ -1,5 +1,5 @@
 import { IsOptional, IsEnum, IsUUID, IsString, IsInt, Min } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 import { TaskStatus, TaskPriority } from '../entities/task.entity';
 
 export class FilterTaskDto {
@@ -33,5 +33,6 @@ export class FilterTaskDto {
 
   @IsOptional()
   @IsString()
+  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
   search?: string;
 }
