@@ -14,7 +14,7 @@ export interface TaskEventPayload {
   event: TaskEvent;
   taskId: string;
   userId: string;
-  data: any;
+  data: unknown;
   timestamp: Date;
 }
 
@@ -24,12 +24,19 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private channel: amqp.Channel | null = null;
   private readonly logger = new Logger(RabbitMQService.name);
   private readonly queueName: string;
+  private isHealthy = false;
+  private reconnectAttempts = 0;
+  private readonly maxReconnectAttempts = 5;
 
   constructor(private configService: ConfigService) {
     this.queueName = this.configService.get<string>('RABBITMQ_QUEUE') || 'task-events';
   }
 
-  async onModuleInit() {
+  async onModuleInit(): Promise<void> {
+    await this.connect();
+  }
+
+  private async connect(): Promise<void> {
     try {
       const rabbitmqUrl = this.configService.get<string>('RABBITMQ_URL');
       if (!rabbitmqUrl) {
@@ -37,24 +44,55 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       }
 
       const connection = await amqp.connect(rabbitmqUrl);
-      this.connection = connection as any;
+      this.connection = connection as unknown as amqp.Connection;
       const channel = await connection.createChannel();
-      this.channel = channel as any;
-      await channel.assertQueue(this.queueName, { durable: true });
+      this.channel = channel as unknown as amqp.Channel;
+      await this.channel.assertQueue(this.queueName, { durable: true });
 
+      this.isHealthy = true;
+      this.reconnectAttempts = 0;
       this.logger.log(`Connected to RabbitMQ and queue "${this.queueName}" asserted`);
+
+      // Handle connection errors
+      this.connection.on('error', (err: Error) => {
+        this.logger.error('RabbitMQ connection error', err);
+        this.isHealthy = false;
+        void this.reconnect();
+      });
+
+      this.connection.on('close', () => {
+        this.logger.warn('RabbitMQ connection closed');
+        this.isHealthy = false;
+        void this.reconnect();
+      });
     } catch (error) {
       this.logger.error('Failed to connect to RabbitMQ', error);
+      this.isHealthy = false;
+      await this.reconnect();
     }
+  }
+
+  private async reconnect(): Promise<void> {
+    if (this.reconnectAttempts >= this.maxReconnectAttempts) {
+      this.logger.error('Max reconnection attempts reached. Service degraded.');
+      return;
+    }
+
+    this.reconnectAttempts++;
+    const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
+
+    this.logger.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+
+    setTimeout(() => void this.connect(), delay);
   }
 
   async onModuleDestroy() {
     try {
       if (this.channel) {
-        await (this.channel as any).close();
+        await (this.channel as unknown as { close: () => Promise<void> }).close();
       }
       if (this.connection) {
-        await (this.connection as any).close();
+        await (this.connection as unknown as { close: () => Promise<void> }).close();
       }
       this.logger.log('RabbitMQ connection closed');
     } catch (error) {
@@ -62,13 +100,18 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publishEvent(event: TaskEvent, taskId: string, userId: string, data: any) {
-    try {
-      if (!this.channel) {
-        this.logger.warn('RabbitMQ channel not available, skipping event publication');
-        return;
-      }
+  async publishEvent(
+    event: TaskEvent,
+    taskId: string,
+    userId: string,
+    data: unknown,
+  ): Promise<void> {
+    if (!this.isHealthy || !this.channel) {
+      this.logger.error(`Cannot publish event ${event}: RabbitMQ not healthy`);
+      return;
+    }
 
+    try {
       const payload: TaskEventPayload = {
         event,
         taskId,
@@ -83,6 +126,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       this.logger.log(`Event published: ${event} for task ${taskId}`);
     } catch (error) {
       this.logger.error(`Failed to publish event: ${event}`, error);
+      this.isHealthy = false;
+      throw error;
     }
+  }
+
+  getHealth(): boolean {
+    return this.isHealthy;
   }
 }
