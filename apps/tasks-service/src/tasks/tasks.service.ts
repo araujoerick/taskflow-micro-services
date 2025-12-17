@@ -2,6 +2,7 @@ import {
   Injectable,
   NotFoundException,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
@@ -11,9 +12,12 @@ import { UpdateTaskDto } from './dto/update-task.dto';
 import { FilterTaskDto } from './dto/filter-task.dto';
 import { TaskHistory, TaskAction } from '../history/entities/task-history.entity';
 import { RabbitMQService, TaskEvent } from '../rabbitmq/rabbitmq.service';
+import { HistoryChanges } from '../history/interfaces/history-changes.interface';
 
 @Injectable()
 export class TasksService {
+  private readonly logger = new Logger(TasksService.name);
+
   constructor(
     @InjectRepository(Task)
     private tasksRepository: Repository<Task>,
@@ -22,13 +26,17 @@ export class TasksService {
     private rabbitmqService: RabbitMQService,
   ) {}
 
-  async create(createTaskDto: CreateTaskDto, userId: string) {
+  async create(createTaskDto: CreateTaskDto, userId: string): Promise<Task> {
+    this.logger.log(`Creating task for user ${userId}`);
+
     const task = this.tasksRepository.create({
       ...createTaskDto,
       createdBy: userId,
     });
 
     const savedTask = await this.tasksRepository.save(task);
+
+    this.logger.log(`Task ${savedTask.id} created successfully`);
 
     // Record history
     await this.createHistory(
@@ -95,11 +103,13 @@ export class TasksService {
     };
   }
 
-  async findOne(id: string) {
-    const task = await this.tasksRepository.findOne({
-      where: { id },
-      relations: ['comments', 'history'],
-    });
+  async findOne(id: string): Promise<Task> {
+    const task = await this.tasksRepository
+      .createQueryBuilder('task')
+      .leftJoinAndSelect('task.comments', 'comment')
+      .leftJoinAndSelect('task.history', 'history')
+      .where('task.id = :id', { id })
+      .getOne();
 
     if (!task) {
       throw new NotFoundException(`Task with ID ${id} not found`);
@@ -108,17 +118,19 @@ export class TasksService {
     return task;
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto, userId: string) {
+  async update(id: string, updateTaskDto: UpdateTaskDto, userId: string): Promise<Task> {
+    this.logger.log(`Updating task ${id} by user ${userId}`);
+
     const task = await this.findOne(id);
 
     // Check permissions
-    if (task.createdBy !== userId && task.assignedTo !== userId) {
-      throw new ForbiddenException('You do not have permission to update this task');
-    }
+    this.checkPermissions(task, userId, 'update');
 
     const oldData = { ...task };
     Object.assign(task, updateTaskDto);
     const updatedTask = await this.tasksRepository.save(task);
+
+    this.logger.log(`Task ${id} updated successfully`);
 
     // Determine action type
     let action = TaskAction.UPDATED;
@@ -148,15 +160,17 @@ export class TasksService {
     return updatedTask;
   }
 
-  async remove(id: string, userId: string) {
+  async remove(id: string, userId: string): Promise<{ message: string }> {
+    this.logger.log(`Deleting task ${id} by user ${userId}`);
+
     const task = await this.findOne(id);
 
     // Check permissions
-    if (task.createdBy !== userId) {
-      throw new ForbiddenException('Only the task creator can delete this task');
-    }
+    this.checkPermissions(task, userId, 'delete');
 
     await this.tasksRepository.remove(task);
+
+    this.logger.log(`Task ${id} deleted successfully`);
 
     // Record history
     await this.createHistory(id, userId, TaskAction.DELETED, { task });
@@ -183,12 +197,25 @@ export class TasksService {
     return history;
   }
 
+  private checkPermissions(task: Task, userId: string, action: 'update' | 'delete'): void {
+    const isCreator = task.createdBy === userId;
+    const isAssigned = task.assignedTo === userId;
+
+    if (action === 'delete' && !isCreator) {
+      throw new ForbiddenException('Only the task creator can delete this task');
+    }
+
+    if (action === 'update' && !isCreator && !isAssigned) {
+      throw new ForbiddenException('You do not have permission to update this task');
+    }
+  }
+
   private async createHistory(
     taskId: string,
     userId: string,
     action: TaskAction,
-    changes: any,
-  ) {
+    changes: HistoryChanges,
+  ): Promise<void> {
     const history = this.historyRepository.create({
       taskId,
       userId,
