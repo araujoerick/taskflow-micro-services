@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Comment } from './entities/comment.entity';
@@ -6,9 +6,12 @@ import { CreateCommentDto } from './dto/create-comment.dto';
 import { Task } from '../tasks/entities/task.entity';
 import { TaskHistory, TaskAction } from '../history/entities/task-history.entity';
 import { RabbitMQService, TaskEvent } from '../rabbitmq/rabbitmq.service';
+import { HistoryChanges } from '../history/interfaces/history-changes.interface';
 
 @Injectable()
 export class CommentsService {
+  private readonly logger = new Logger(CommentsService.name);
+
   constructor(
     @InjectRepository(Comment)
     private commentsRepository: Repository<Comment>,
@@ -19,7 +22,9 @@ export class CommentsService {
     private rabbitmqService: RabbitMQService,
   ) {}
 
-  async create(taskId: string, createCommentDto: CreateCommentDto, userId: string) {
+  async create(taskId: string, createCommentDto: CreateCommentDto, userId: string): Promise<Comment> {
+    this.logger.log(`Creating comment on task ${taskId} by user ${userId}`);
+
     // Verify task exists
     const task = await this.tasksRepository.findOne({ where: { id: taskId } });
     if (!task) {
@@ -33,6 +38,8 @@ export class CommentsService {
     });
 
     const savedComment = await this.commentsRepository.save(comment);
+
+    this.logger.log(`Comment ${savedComment.id} created successfully on task ${taskId}`);
 
     // Record history
     await this.createHistory(taskId, userId, { comment: savedComment });
@@ -63,7 +70,7 @@ export class CommentsService {
     return comments;
   }
 
-  private async createHistory(taskId: string, userId: string, changes: any) {
+  private async createHistory(taskId: string, userId: string, changes: HistoryChanges): Promise<void> {
     const history = this.historyRepository.create({
       taskId,
       userId,
