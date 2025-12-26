@@ -23,6 +23,17 @@ export default defineConfig({
         target: 'http://localhost:3000',
         changeOrigin: true,
         ws: true,
+        configure: (proxy) => {
+          proxy.on('error', (err) => {
+            console.log('WebSocket proxy error (non-critical):', err.message);
+          });
+          proxy.on('proxyReqWs', () => {
+            // WebSocket request proxied
+          });
+          proxy.on('close', () => {
+            // WebSocket connection closed
+          });
+        },
       },
     },
   },
