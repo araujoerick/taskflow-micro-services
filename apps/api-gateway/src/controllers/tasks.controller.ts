@@ -10,17 +10,26 @@ import {
   Headers,
   UseGuards,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProxyService } from '../proxy/proxy.service';
-import { environment } from '../config/environment';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { CreateTaskDto, UpdateTaskDto, CreateCommentDto } from '../dto/tasks.dto';
 
 @ApiTags('Tasks')
 @Controller('tasks')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class TasksController {
-  constructor(private readonly proxyService: ProxyService) {}
+  private readonly tasksServiceUrl: string;
+
+  constructor(
+    private readonly proxyService: ProxyService,
+    private readonly configService: ConfigService,
+  ) {
+    this.tasksServiceUrl =
+      this.configService.get<string>('TASKS_SERVICE_URL') || 'http://localhost:3002';
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all tasks with filters and pagination' })
@@ -38,7 +47,7 @@ export class TasksController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.tasks,
+      this.tasksServiceUrl,
       '/tasks',
       'GET',
       undefined,
@@ -58,7 +67,7 @@ export class TasksController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.tasks,
+      this.tasksServiceUrl,
       `/tasks/${id}`,
       'GET',
       undefined,
@@ -72,17 +81,11 @@ export class TasksController {
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async create(
-    @Body() body: unknown,
+    @Body() body: CreateTaskDto,
     @Headers('authorization') authHeader?: string,
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
-    return this.proxyService.proxyRequest(
-      environment.services.tasks,
-      '/tasks',
-      'POST',
-      body,
-      headers,
-    );
+    return this.proxyService.proxyRequest(this.tasksServiceUrl, '/tasks', 'POST', body, headers);
   }
 
   @Patch(':id')
@@ -93,12 +96,12 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async update(
     @Param('id') id: string,
-    @Body() body: unknown,
+    @Body() body: UpdateTaskDto,
     @Headers('authorization') authHeader?: string,
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.tasks,
+      this.tasksServiceUrl,
       `/tasks/${id}`,
       'PATCH',
       body,
@@ -118,7 +121,7 @@ export class TasksController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.tasks,
+      this.tasksServiceUrl,
       `/tasks/${id}`,
       'DELETE',
       undefined,
@@ -137,7 +140,7 @@ export class TasksController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.tasks,
+      this.tasksServiceUrl,
       `/tasks/${taskId}/comments`,
       'GET',
       undefined,
@@ -152,12 +155,12 @@ export class TasksController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createComment(
     @Param('taskId') taskId: string,
-    @Body() body: unknown,
+    @Body() body: CreateCommentDto,
     @Headers('authorization') authHeader?: string,
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.tasks,
+      this.tasksServiceUrl,
       `/tasks/${taskId}/comments`,
       'POST',
       body,
@@ -176,7 +179,7 @@ export class TasksController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.tasks,
+      this.tasksServiceUrl,
       `/tasks/${id}/history`,
       'GET',
       undefined,
