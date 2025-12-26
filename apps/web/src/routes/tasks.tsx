@@ -1,20 +1,31 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { Layout } from '@/components/Layout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { createFileRoute, Link } from '@tanstack/react-router';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Layout } from '@/components/Layout';
+import { useTasks, useCreateTask } from '@/hooks/queries/useTasks';
+import { createTaskSchema, type CreateTaskInput } from '@/schemas/task.schema';
+import { TaskStatus, TaskPriority, type CreateTaskDto } from '@repo/types';
+import {
+  taskStatusLabels,
+  taskStatusVariants,
+  taskPriorityLabels,
+  taskPriorityVariants,
+} from '@/utils/enum-mappers';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -22,142 +33,58 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Plus, Search } from 'lucide-react'
-import api from '@/lib/api'
-import { toast } from 'sonner'
+} from '@/components/ui/dialog';
+import { Plus, Search } from 'lucide-react';
 
 export const Route = createFileRoute('/tasks')({
   component: TasksPage,
-})
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: 'pending' | 'in_progress' | 'completed'
-  priority: 'low' | 'medium' | 'high'
-  createdAt: string
-  updatedAt: string
-}
-
-interface PaginatedResponse {
-  tasks: Task[]
-  total: number
-  page: number
-  limit: number
-  totalPages: number
-}
+});
 
 function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [loading, setLoading] = useState(true)
-  const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [priorityFilter, setPriorityFilter] = useState<string>('all')
-  const [page, setPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
-  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | undefined>();
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | undefined>();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  // New task form state
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    status: 'pending' as Task['status'],
-    priority: 'medium' as Task['priority'],
-  })
-  const [creating, setCreating] = useState(false)
+  const { data, isLoading } = useTasks({
+    page,
+    limit: 10,
+    search: search || undefined,
+    status: statusFilter,
+    priority: priorityFilter,
+  });
 
-  useEffect(() => {
-    fetchTasks()
-  }, [page, statusFilter, priorityFilter, search])
+  const createTask = useCreateTask();
 
-  const fetchTasks = async () => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: '10',
-      })
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<CreateTaskInput>({
+    resolver: zodResolver(createTaskSchema),
+    defaultValues: {
+      status: TaskStatus.TODO,
+      priority: TaskPriority.MEDIUM,
+    },
+  });
 
-      if (search) params.append('search', search)
-      if (statusFilter !== 'all') params.append('status', statusFilter)
-      if (priorityFilter !== 'all') params.append('priority', priorityFilter)
-
-      const { data } = await api.get<PaginatedResponse>(`/tasks?${params}`)
-      setTasks(data?.tasks || [])
-      setTotalPages(data?.totalPages || 1)
-    } catch (error) {
-      console.error('Failed to fetch tasks:', error)
-      toast.error('Failed to load tasks')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault()
-
-    if (!newTask.title.trim()) {
-      toast.error('Please enter a task title')
-      return
-    }
-
-    try {
-      setCreating(true)
-      await api.post('/tasks', newTask)
-
-      // Reset form and close modal
-      setNewTask({
-        title: '',
-        description: '',
-        status: 'pending',
-        priority: 'medium',
-      })
-      setShowCreateModal(false)
-
-      // Refresh tasks list
-      await fetchTasks()
-      toast.success('Task created successfully!')
-    } catch (error) {
-      console.error('Failed to create task:', error)
-      toast.error('Failed to create task. Please try again.')
-    } finally {
-      setCreating(false)
-    }
-  }
-
-  const getStatusBadge = (status: Task['status']) => {
-    const variants = {
-      pending: 'secondary',
-      in_progress: 'default',
-      completed: 'success',
-    } as const
-
-    const labels = {
-      pending: 'Pending',
-      in_progress: 'In Progress',
-      completed: 'Completed',
-    }
-
-    return <Badge variant={variants[status]}>{labels[status]}</Badge>
-  }
-
-  const getPriorityBadge = (priority: Task['priority']) => {
-    const variants = {
-      low: 'secondary',
-      medium: 'warning',
-      high: 'destructive',
-    } as const
-
-    const labels = {
-      low: 'Low',
-      medium: 'Medium',
-      high: 'High',
-    }
-
-    return <Badge variant={variants[priority]}>{labels[priority]}</Badge>
-  }
+  const onSubmit = async (formData: CreateTaskInput) => {
+    // Transform form data to DTO format
+    const dto: CreateTaskDto = {
+      title: formData.title,
+      description: formData.description || '',
+      status: formData.status,
+      priority: formData.priority,
+      assignedToId: formData.assignedToId || undefined,
+      dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
+    };
+    await createTask.mutateAsync(dto);
+    reset();
+    setShowCreateModal(false);
+  };
 
   return (
     <ProtectedRoute>
@@ -166,9 +93,7 @@ function TasksPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold">Tasks</h1>
-              <p className="text-[var(--color-muted-foreground)]">
-                Manage and track your tasks
-              </p>
+              <p className="text-(--color-muted-foreground)">Manage and track your tasks</p>
             </div>
             <Button onClick={() => setShowCreateModal(true)}>
               <Plus className="mr-2 h-4 w-4" />
@@ -184,7 +109,7 @@ function TasksPage() {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-[var(--color-muted-foreground)]" />
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-(--color-muted-foreground)" />
                   <Input
                     placeholder="Search tasks..."
                     value={search}
@@ -193,35 +118,51 @@ function TasksPage() {
                   />
                 </div>
 
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
+                <Select
                   value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
+                  onValueChange={(v) =>
+                    setStatusFilter(v === 'all' ? undefined : (v as TaskStatus))
+                  }
                 >
-                  <option value="all">All Statuses</option>
-                  <option value="pending">Pending</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Statuses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Statuses</SelectItem>
+                    {Object.values(TaskStatus).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {taskStatusLabels[status]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus:outline-none focus:ring-1 focus:ring-ring"
+                <Select
                   value={priorityFilter}
-                  onChange={(e) => setPriorityFilter(e.target.value)}
+                  onValueChange={(v) =>
+                    setPriorityFilter(v === 'all' ? undefined : (v as TaskPriority))
+                  }
                 >
-                  <option value="all">All Priorities</option>
-                  <option value="low">Low</option>
-                  <option value="medium">Medium</option>
-                  <option value="high">High</option>
-                </select>
+                  <SelectTrigger>
+                    <SelectValue placeholder="All Priorities" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priorities</SelectItem>
+                    {Object.values(TaskPriority).map((priority) => (
+                      <SelectItem key={priority} value={priority}>
+                        {taskPriorityLabels[priority]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
                 <Button
                   variant="outline"
                   onClick={() => {
-                    setSearch('')
-                    setStatusFilter('all')
-                    setPriorityFilter('all')
-                    setPage(1)
+                    setSearch('');
+                    setStatusFilter(undefined);
+                    setPriorityFilter(undefined);
+                    setPage(1);
                   }}
                 >
                   Clear Filters
@@ -230,22 +171,22 @@ function TasksPage() {
             </CardContent>
           </Card>
 
-          {loading ? (
+          {isLoading ? (
             <div className="text-center py-12">
               <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-              <p className="mt-4 text-[var(--color-muted-foreground)]">Loading tasks...</p>
+              <p className="mt-4 text-(--color-muted-foreground)">Loading tasks...</p>
             </div>
-          ) : !tasks || tasks.length === 0 ? (
+          ) : !data || data.data.length === 0 ? (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-[var(--color-muted-foreground)]">
+                <p className="text-(--color-muted-foreground)">
                   No tasks found. Create your first task to get started.
                 </p>
               </CardContent>
             </Card>
           ) : (
             <div className="space-y-4">
-              {tasks.map((task) => (
+              {data.data.map((task) => (
                 <Link key={task.id} to="/tasks/$taskId" params={{ taskId: task.id }}>
                   <Card className="hover:shadow-md transition-shadow cursor-pointer">
                     <CardHeader>
@@ -257,8 +198,12 @@ function TasksPage() {
                           </CardDescription>
                         </div>
                         <div className="flex gap-2 ml-4">
-                          {getStatusBadge(task.status)}
-                          {getPriorityBadge(task.priority)}
+                          <Badge variant={taskStatusVariants[task.status]}>
+                            {taskStatusLabels[task.status]}
+                          </Badge>
+                          <Badge variant={taskPriorityVariants[task.priority]}>
+                            {taskPriorityLabels[task.priority]}
+                          </Badge>
                         </div>
                       </div>
                     </CardHeader>
@@ -268,7 +213,7 @@ function TasksPage() {
             </div>
           )}
 
-          {totalPages > 1 && (
+          {data && data.meta.totalPages > 1 && (
             <div className="flex items-center justify-center gap-2">
               <Button
                 variant="outline"
@@ -278,12 +223,12 @@ function TasksPage() {
                 Previous
               </Button>
               <span className="text-sm">
-                Page {page} of {totalPages}
+                Page {page} of {data.meta.totalPages}
               </span>
               <Button
                 variant="outline"
-                onClick={() => setPage(Math.min(totalPages, page + 1))}
-                disabled={page === totalPages}
+                onClick={() => setPage(Math.min(data.meta.totalPages, page + 1))}
+                disabled={page === data.meta.totalPages}
               >
                 Next
               </Button>
@@ -300,17 +245,12 @@ function TasksPage() {
               </DialogDescription>
             </DialogHeader>
 
-            <form onSubmit={handleCreateTask}>
+            <form onSubmit={handleSubmit(onSubmit)}>
               <div className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="title">Title *</Label>
-                  <Input
-                    id="title"
-                    placeholder="Enter task title"
-                    value={newTask.title}
-                    onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-                    required
-                  />
+                  <Input id="title" placeholder="Enter task title" {...register('title')} />
+                  {errors.title && <p className="text-sm text-red-500">{errors.title.message}</p>}
                 </div>
 
                 <div className="space-y-2">
@@ -318,8 +258,7 @@ function TasksPage() {
                   <Textarea
                     id="description"
                     placeholder="Enter task description"
-                    value={newTask.description}
-                    onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
+                    {...register('description')}
                     rows={4}
                   />
                 </div>
@@ -328,18 +267,18 @@ function TasksPage() {
                   <div className="space-y-2">
                     <Label htmlFor="status">Status</Label>
                     <Select
-                      value={newTask.status}
-                      onValueChange={(value) =>
-                        setNewTask({ ...newTask, status: value as Task['status'] })
-                      }
+                      defaultValue={TaskStatus.TODO}
+                      onValueChange={(value) => setValue('status', value as TaskStatus)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
+                        {Object.values(TaskStatus).map((status) => (
+                          <SelectItem key={status} value={status}>
+                            {taskStatusLabels[status]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -347,18 +286,18 @@ function TasksPage() {
                   <div className="space-y-2">
                     <Label htmlFor="priority">Priority</Label>
                     <Select
-                      value={newTask.priority}
-                      onValueChange={(value) =>
-                        setNewTask({ ...newTask, priority: value as Task['priority'] })
-                      }
+                      defaultValue={TaskPriority.MEDIUM}
+                      onValueChange={(value) => setValue('priority', value as TaskPriority)}
                     >
                       <SelectTrigger>
                         <SelectValue placeholder="Select priority" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="low">Low</SelectItem>
-                        <SelectItem value="medium">Medium</SelectItem>
-                        <SelectItem value="high">High</SelectItem>
+                        {Object.values(TaskPriority).map((priority) => (
+                          <SelectItem key={priority} value={priority}>
+                            {taskPriorityLabels[priority]}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -370,12 +309,12 @@ function TasksPage() {
                   type="button"
                   variant="outline"
                   onClick={() => setShowCreateModal(false)}
-                  disabled={creating}
+                  disabled={createTask.isPending}
                 >
                   Cancel
                 </Button>
-                <Button type="submit" disabled={creating}>
-                  {creating ? 'Creating...' : 'Create Task'}
+                <Button type="submit" disabled={createTask.isPending}>
+                  {createTask.isPending ? 'Creating...' : 'Create Task'}
                 </Button>
               </DialogFooter>
             </form>
@@ -383,5 +322,5 @@ function TasksPage() {
         </Dialog>
       </Layout>
     </ProtectedRoute>
-  )
+  );
 }
