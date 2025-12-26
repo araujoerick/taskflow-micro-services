@@ -1,16 +1,7 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Body,
-  Param,
-  Query,
-  Headers,
-  UseGuards,
-} from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Headers, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProxyService } from '../proxy/proxy.service';
-import { environment } from '../config/environment';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('Notifications')
@@ -18,7 +9,15 @@ import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class NotificationsController {
-  constructor(private readonly proxyService: ProxyService) {}
+  private readonly notificationsServiceUrl: string;
+
+  constructor(
+    private readonly proxyService: ProxyService,
+    private readonly configService: ConfigService,
+  ) {
+    this.notificationsServiceUrl =
+      this.configService.get<string>('NOTIFICATIONS_SERVICE_URL') || 'http://localhost:3003';
+  }
 
   @Get()
   @ApiOperation({ summary: 'Get all notifications for current user' })
@@ -34,7 +33,7 @@ export class NotificationsController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.notifications,
+      this.notificationsServiceUrl,
       '/notifications',
       'GET',
       undefined,
@@ -47,12 +46,10 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Get unread notifications count' })
   @ApiResponse({ status: 200, description: 'Unread count retrieved successfully' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async getUnreadCount(
-    @Headers('authorization') authHeader?: string,
-  ): Promise<unknown> {
+  async getUnreadCount(@Headers('authorization') authHeader?: string): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.notifications,
+      this.notificationsServiceUrl,
       '/notifications/unread-count',
       'GET',
       undefined,
@@ -71,7 +68,7 @@ export class NotificationsController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.notifications,
+      this.notificationsServiceUrl,
       `/notifications/${id}`,
       'GET',
       undefined,
@@ -90,7 +87,7 @@ export class NotificationsController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.notifications,
+      this.notificationsServiceUrl,
       '/notifications/mark-as-read',
       'POST',
       body,
@@ -102,12 +99,10 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Mark all notifications as read' })
   @ApiResponse({ status: 200, description: 'All notifications marked as read' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  async markAllAsRead(
-    @Headers('authorization') authHeader?: string,
-  ): Promise<unknown> {
+  async markAllAsRead(@Headers('authorization') authHeader?: string): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.notifications,
+      this.notificationsServiceUrl,
       '/notifications/mark-all-as-read',
       'POST',
       undefined,

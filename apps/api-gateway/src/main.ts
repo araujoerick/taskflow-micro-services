@@ -1,22 +1,46 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { json, urlencoded } from 'express';
+import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { environment } from './config/environment';
+import { AllExceptionsFilter } from './filters/all-exceptions.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const configService = app.get(ConfigService);
 
-  // Set global prefix for all routes
   app.setGlobalPrefix('api');
 
-  // CORS
+  // Security headers
+  app.use(helmet());
+
+  // Body parser limits
+  app.use(json({ limit: '1mb' }));
+  app.use(urlencoded({ extended: true, limit: '1mb' }));
+
+  const allowedOrigins = (configService.get<string>('CORS_ORIGIN') || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
   app.enableCors({
-    origin: environment.cors.origin,
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
 
-  // Global validation pipe
+  app.useGlobalFilters(new AllExceptionsFilter());
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -46,19 +70,22 @@ async function bootstrap() {
     },
   });
 
-  await app.listen(environment.port);
+  const port = configService.get<number>('PORT') || 3000;
+  const nodeEnv = configService.get<string>('NODE_ENV') || 'development';
+
+  await app.listen(port);
 
   console.log(`
 ╔════════════════════════════════════════════════════════════════╗
 ║                                                                ║
 ║   🚀 API Gateway is running!                                  ║
 ║                                                                ║
-║   📍 HTTP Server:      http://localhost:${environment.port}                   ║
-║   📡 WebSocket:        ws://localhost:${environment.port}/notifications      ║
-║   📚 API Docs:         http://localhost:${environment.port}/docs             ║
-║   ❤️  Health Check:     http://localhost:${environment.port}/api/health      ║
+║   📍 HTTP Server:      http://localhost:${port}                   ║
+║   📡 WebSocket:        ws://localhost:${port}/notifications      ║
+║   📚 API Docs:         http://localhost:${port}/docs             ║
+║   ❤️  Health Check:     http://localhost:${port}/api/health      ║
 ║                                                                ║
-║   Environment: ${environment.nodeEnv.padEnd(47)} ║
+║   Environment: ${nodeEnv.padEnd(47)} ║
 ║                                                                ║
 ╚════════════════════════════════════════════════════════════════╝
   `);

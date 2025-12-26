@@ -11,7 +11,6 @@ import { Logger, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { RabbitMQService, NotificationPayload } from './rabbitmq.service';
-import { environment } from '../config/environment';
 
 interface AuthenticatedSocket extends Socket {
   userId?: string;
@@ -19,7 +18,7 @@ interface AuthenticatedSocket extends Socket {
 
 @WebSocketGateway({
   cors: {
-    origin: environment.cors.origin,
+    origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
     credentials: true,
   },
   namespace: '/notifications',
@@ -78,7 +77,9 @@ export class NotificationsGateway
         userId: payload.sub,
       });
     } catch (error) {
-      this.logger.error(`Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      this.logger.error(
+        `Connection failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
       client.emit('error', { message: 'Authentication failed' });
       client.disconnect();
     }
