@@ -1,107 +1,85 @@
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
-import { useAuth } from '@/contexts/AuthContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { toast } from 'sonner'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { loginSchema, type LoginInput } from '@/schemas/auth.schema';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
-})
+});
 
 function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<LoginInput>({
+    resolver: zodResolver(loginSchema),
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
-    setIsLoading(true)
-
-    try {
-      await login(email, password)
-      toast.success('Welcome back!')
-      navigate({ to: '/tasks' })
-    } catch (err: any) {
-      const errorMsg = err.response?.data?.message || 'Failed to login'
-      setError(errorMsg)
-      toast.error(errorMsg)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+  const onSubmit = async (data: LoginInput) => {
+    await login.mutateAsync(data);
+    navigate({ to: '/tasks' });
+  };
 
   return (
     <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">
-            Welcome back
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
           <CardDescription className="text-center">
             Enter your credentials to access your account
           </CardDescription>
         </CardHeader>
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
-            {error && (
-              <div className="p-3 text-sm rounded-md bg-[var(--color-destructive)] text-[var(--color-destructive-foreground)]">
-                {error}
-              </div>
-            )}
-
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium">
-                Email
-              </label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
+                {...register('email')}
+                disabled={login.isPending}
               />
+              {errors.email && <p className="text-sm text-red-500">{errors.email.message}</p>}
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium">
-                Password
-              </label>
+              <Label htmlFor="password">Password</Label>
               <Input
                 id="password"
                 type="password"
                 placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
+                {...register('password')}
+                disabled={login.isPending}
               />
+              {errors.password && <p className="text-sm text-red-500">{errors.password.message}</p>}
             </div>
           </CardContent>
 
           <CardFooter className="flex flex-col space-y-4">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={isLoading}
-            >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+            <Button type="submit" className="w-full" disabled={login.isPending}>
+              {login.isPending ? 'Signing in...' : 'Sign in'}
             </Button>
 
             <p className="text-sm text-center">
               Don't have an account?{' '}
-              <Link
-                to="/register"
-                className="font-medium text-[var(--color-primary)] hover:underline"
-              >
+              <Link to="/register" className="font-medium text-(--color-primary) hover:underline">
                 Sign up
               </Link>
             </p>
@@ -109,5 +87,5 @@ function LoginPage() {
         </form>
       </Card>
     </div>
-  )
+  );
 }

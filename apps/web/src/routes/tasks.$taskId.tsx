@@ -1,180 +1,133 @@
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-import { useState, useEffect } from 'react'
-import { ProtectedRoute } from '@/components/ProtectedRoute'
-import { Layout } from '@/components/Layout'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
+import { Layout } from '@/components/Layout';
+import {
+  useTask,
+  useTaskComments,
+  useTaskHistory,
+  useUpdateTask,
+  useDeleteTask,
+  useAddComment,
+} from '@/hooks/queries/useTasks';
+import {
+  updateTaskSchema,
+  commentSchema,
+  type UpdateTaskInput,
+  type CommentInput,
+} from '@/schemas/task.schema';
+import { TaskStatus, TaskPriority, type UpdateTaskDto } from '@repo/types';
+import {
+  taskStatusLabels,
+  taskStatusVariants,
+  taskPriorityLabels,
+  taskPriorityVariants,
+} from '@/utils/enum-mappers';
+import { formatDateTime } from '@/utils/date-formatters';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, MessageSquare, Clock, Edit, Trash2 } from 'lucide-react'
-import api from '@/lib/api'
-import { toast } from 'sonner'
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, MessageSquare, Clock, Edit, Trash2 } from 'lucide-react';
 
 export const Route = createFileRoute('/tasks/$taskId')({
   component: TaskDetailsPage,
-})
-
-interface Task {
-  id: string
-  title: string
-  description: string
-  status: 'pending' | 'in_progress' | 'completed'
-  priority: 'low' | 'medium' | 'high'
-  createdAt: string
-  updatedAt: string
-  userId: string
-}
-
-interface Comment {
-  id: string
-  content: string
-  userId: string
-  userName: string
-  createdAt: string
-}
-
-interface HistoryEntry {
-  id: string
-  field: string
-  oldValue: string
-  newValue: string
-  changedAt: string
-  changedBy: string
-}
+});
 
 function TaskDetailsPage() {
-  const { taskId } = Route.useParams()
-  const navigate = useNavigate()
+  const { taskId } = Route.useParams();
+  const navigate = useNavigate();
 
-  const [task, setTask] = useState<Task | null>(null)
-  const [comments, setComments] = useState<Comment[]>([])
-  const [history, setHistory] = useState<HistoryEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [editMode, setEditMode] = useState(false)
+  console.log('TaskDetailsPage - Rendering with taskId:', taskId);
 
-  const [newComment, setNewComment] = useState('')
-  const [editedTask, setEditedTask] = useState<Partial<Task>>({})
+  const { data: task, isLoading } = useTask(taskId);
+  const { data: comments } = useTaskComments(taskId);
+  const { data: history } = useTaskHistory(taskId);
 
-  useEffect(() => {
-    fetchTaskDetails()
-  }, [taskId])
+  const updateTask = useUpdateTask();
+  const deleteTask = useDeleteTask();
+  const addComment = useAddComment();
 
-  const fetchTaskDetails = async () => {
-    try {
-      setLoading(true)
-      const [taskRes, commentsRes, historyRes] = await Promise.all([
-        api.get(`/tasks/${taskId}`),
-        api.get(`/tasks/${taskId}/comments`),
-        api.get(`/tasks/${taskId}/history`),
-      ])
+  const [editMode, setEditMode] = useState(false);
 
-      setTask(taskRes.data)
-      setEditedTask(taskRes.data)
-      setComments(commentsRes.data)
-      setHistory(historyRes.data)
-    } catch (error) {
-      console.error('Failed to fetch task details:', error)
-      toast.error('Failed to load task details')
-    } finally {
-      setLoading(false)
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm<UpdateTaskInput>({
+    resolver: zodResolver(updateTaskSchema),
+  });
+
+  const {
+    register: registerComment,
+    handleSubmit: handleSubmitComment,
+    reset: resetComment,
+    formState: { errors: commentErrors },
+  } = useForm<CommentInput>({
+    resolver: zodResolver(commentSchema),
+  });
+
+  const onUpdateTask = async (data: UpdateTaskInput) => {
+    // Transform form data to DTO format
+    const dto: UpdateTaskDto = {
+      title: data.title,
+      description: data.description,
+      status: data.status,
+      priority: data.priority,
+      assignedToId: data.assignedToId || undefined,
+      dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+    };
+    await updateTask.mutateAsync({ id: taskId, updates: dto });
+    setEditMode(false);
+  };
+
+  const onDeleteTask = async () => {
+    if (!confirm('Are you sure you want to delete this task?')) return;
+    await deleteTask.mutateAsync(taskId);
+    navigate({ to: '/tasks' });
+  };
+
+  const onAddComment = async (data: CommentInput) => {
+    await addComment.mutateAsync({ taskId, content: data.content });
+    resetComment();
+  };
+
+  const handleEnterEditMode = () => {
+    if (task) {
+      reset({
+        title: task.title,
+        description: task.description,
+        status: task.status,
+        priority: task.priority,
+      });
+      setEditMode(true);
     }
-  }
+  };
 
-  const handleUpdateTask = async () => {
-    try {
-      await api.patch(`/tasks/${taskId}`, editedTask)
-      await fetchTaskDetails()
-      setEditMode(false)
-      toast.success('Task updated successfully!')
-    } catch (error) {
-      console.error('Failed to update task:', error)
-      toast.error('Failed to update task')
-    }
-  }
-
-  const handleDeleteTask = async () => {
-    if (!confirm('Are you sure you want to delete this task?')) return
-
-    try {
-      await api.delete(`/tasks/${taskId}`)
-      toast.success('Task deleted successfully!')
-      navigate({ to: '/tasks' })
-    } catch (error) {
-      console.error('Failed to delete task:', error)
-      toast.error('Failed to delete task')
-    }
-  }
-
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newComment.trim()) return
-
-    try {
-      await api.post(`/tasks/${taskId}/comments`, { content: newComment })
-      setNewComment('')
-      await fetchTaskDetails()
-      toast.success('Comment added successfully!')
-    } catch (error) {
-      console.error('Failed to add comment:', error)
-      toast.error('Failed to add comment')
-    }
-  }
-
-  const getStatusBadge = (status: Task['status']) => {
-    const variants = {
-      pending: 'secondary',
-      in_progress: 'default',
-      completed: 'success',
-    } as const
-
-    const labels = {
-      pending: 'Pending',
-      in_progress: 'In Progress',
-      completed: 'Completed',
-    }
-
-    return <Badge variant={variants[status]}>{labels[status]}</Badge>
-  }
-
-  const getPriorityBadge = (priority: Task['priority']) => {
-    const variants = {
-      low: 'secondary',
-      medium: 'warning',
-      high: 'destructive',
-    } as const
-
-    const labels = {
-      low: 'Low',
-      medium: 'Medium',
-      high: 'High',
-    }
-
-    return <Badge variant={variants[priority]}>{labels[priority]}</Badge>
-  }
-
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleString()
-  }
-
-  if (loading) {
+  if (isLoading) {
     return (
       <ProtectedRoute>
         <Layout>
           <div className="text-center py-12">
             <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent"></div>
-            <p className="mt-4 text-[var(--color-muted-foreground)]">Loading task...</p>
+            <p className="mt-4 text-(--color-muted-foreground)">Loading task...</p>
           </div>
         </Layout>
       </ProtectedRoute>
-    )
+    );
   }
 
   if (!task) {
@@ -183,12 +136,12 @@ function TaskDetailsPage() {
         <Layout>
           <Card>
             <CardContent className="py-12 text-center">
-              <p className="text-[var(--color-muted-foreground)]">Task not found</p>
+              <p className="text-(--color-muted-foreground)">Task not found</p>
             </CardContent>
           </Card>
         </Layout>
       </ProtectedRoute>
-    )
+    );
   }
 
   return (
@@ -201,17 +154,15 @@ function TaskDetailsPage() {
             </Button>
             <div className="flex-1">
               <h1 className="text-3xl font-bold">Task Details</h1>
-              <p className="text-[var(--color-muted-foreground)]">
-                View and manage task information
-              </p>
+              <p className="text-(--color-muted-foreground)">View and manage task information</p>
             </div>
             {!editMode && (
               <div className="flex gap-2">
-                <Button onClick={() => setEditMode(true)}>
+                <Button onClick={handleEnterEditMode}>
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </Button>
-                <Button variant="destructive" onClick={handleDeleteTask}>
+                <Button variant="destructive" onClick={onDeleteTask}>
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete
                 </Button>
@@ -224,32 +175,35 @@ function TaskDetailsPage() {
               <div className="flex items-start justify-between">
                 <div className="space-y-1 flex-1">
                   {editMode ? (
-                    <Input
-                      value={editedTask.title}
-                      onChange={(e) => setEditedTask({ ...editedTask, title: e.target.value })}
-                      placeholder="Task title"
-                      className="text-2xl font-bold"
-                    />
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Title</Label>
+                      <Input id="title" {...register('title')} placeholder="Task title" />
+                      {errors.title && (
+                        <p className="text-sm text-red-500">{errors.title.message}</p>
+                      )}
+                    </div>
                   ) : (
                     <CardTitle>{task.title}</CardTitle>
                   )}
                 </div>
                 <div className="flex gap-2 ml-4">
-                  {getStatusBadge(editMode ? editedTask.status! : task.status)}
-                  {getPriorityBadge(editMode ? editedTask.priority! : task.priority)}
+                  <Badge variant={taskStatusVariants[task.status]}>
+                    {taskStatusLabels[task.status]}
+                  </Badge>
+                  <Badge variant={taskPriorityVariants[task.priority]}>
+                    {taskPriorityLabels[task.priority]}
+                  </Badge>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               {editMode ? (
-                <>
+                <form onSubmit={handleSubmit(onUpdateTask)} className="space-y-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Description</label>
+                    <Label htmlFor="description">Description</Label>
                     <Textarea
-                      value={editedTask.description}
-                      onChange={(e) =>
-                        setEditedTask({ ...editedTask, description: e.target.value })
-                      }
+                      id="description"
+                      {...register('description')}
                       placeholder="Task description"
                       rows={4}
                     />
@@ -257,63 +211,59 @@ function TaskDetailsPage() {
 
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Status</label>
+                      <Label htmlFor="status">Status</Label>
                       <Select
-                        value={editedTask.status}
-                        onValueChange={(value) =>
-                          setEditedTask({ ...editedTask, status: value as Task['status'] })
-                        }
+                        defaultValue={task.status}
+                        onValueChange={(value) => setValue('status', value as TaskStatus)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="pending">Pending</SelectItem>
-                          <SelectItem value="in_progress">In Progress</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
+                          {Object.values(TaskStatus).map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {taskStatusLabels[status]}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-medium">Priority</label>
+                      <Label htmlFor="priority">Priority</Label>
                       <Select
-                        value={editedTask.priority}
-                        onValueChange={(value) =>
-                          setEditedTask({
-                            ...editedTask,
-                            priority: value as Task['priority'],
-                          })
-                        }
+                        defaultValue={task.priority}
+                        onValueChange={(value) => setValue('priority', value as TaskPriority)}
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
+                          {Object.values(TaskPriority).map((priority) => (
+                            <SelectItem key={priority} value={priority}>
+                              {taskPriorityLabels[priority]}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <Button onClick={handleUpdateTask}>Save Changes</Button>
-                    <Button variant="outline" onClick={() => {
-                      setEditMode(false)
-                      setEditedTask(task)
-                    }}>
+                    <Button type="submit" disabled={updateTask.isPending}>
+                      {updateTask.isPending ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => setEditMode(false)}>
                       Cancel
                     </Button>
                   </div>
-                </>
+                </form>
               ) : (
                 <>
-                  <p className="text-[var(--color-muted-foreground)]">{task.description}</p>
-                  <div className="flex gap-4 text-sm text-[var(--color-muted-foreground)]">
-                    <span>Created: {formatDate(task.createdAt)}</span>
-                    <span>Updated: {formatDate(task.updatedAt)}</span>
+                  <p className="text-(--color-muted-foreground)">{task.description}</p>
+                  <div className="flex gap-4 text-sm text-(--color-muted-foreground)">
+                    <span>Created: {formatDateTime(task.createdAt)}</span>
+                    <span>Updated: {formatDateTime(task.updatedAt)}</span>
                   </div>
                 </>
               )}
@@ -325,32 +275,36 @@ function TaskDetailsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquare className="h-5 w-5" />
-                  Comments ({comments.length})
+                  Comments ({comments?.length || 0})
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <form onSubmit={handleAddComment} className="space-y-2">
+                <form onSubmit={handleSubmitComment(onAddComment)} className="space-y-2">
                   <Textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
+                    {...registerComment('content')}
                     placeholder="Add a comment..."
                     rows={3}
                   />
-                  <Button type="submit" size="sm">Add Comment</Button>
+                  {commentErrors.content && (
+                    <p className="text-sm text-red-500">{commentErrors.content.message}</p>
+                  )}
+                  <Button type="submit" size="sm" disabled={addComment.isPending}>
+                    {addComment.isPending ? 'Adding...' : 'Add Comment'}
+                  </Button>
                 </form>
 
                 <div className="space-y-3">
-                  {comments.length === 0 ? (
-                    <p className="text-sm text-[var(--color-muted-foreground)] text-center py-4">
+                  {!comments || comments.length === 0 ? (
+                    <p className="text-sm text-(--color-muted-foreground) text-center py-4">
                       No comments yet
                     </p>
                   ) : (
                     comments.map((comment) => (
                       <div key={comment.id} className="border rounded-md p-3 space-y-1">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{comment.userName}</span>
-                          <span className="text-xs text-[var(--color-muted-foreground)]">
-                            {formatDate(comment.createdAt)}
+                          <span className="text-sm font-medium">User {comment.userId}</span>
+                          <span className="text-xs text-(--color-muted-foreground)">
+                            {formatDateTime(comment.createdAt)}
                           </span>
                         </div>
                         <p className="text-sm">{comment.content}</p>
@@ -365,30 +319,34 @@ function TaskDetailsPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Clock className="h-5 w-5" />
-                  History ({history.length})
+                  History ({history?.length || 0})
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {history.length === 0 ? (
-                    <p className="text-sm text-[var(--color-muted-foreground)] text-center py-4">
+                  {!history || history.length === 0 ? (
+                    <p className="text-sm text-(--color-muted-foreground) text-center py-4">
                       No history yet
                     </p>
                   ) : (
                     history.map((entry) => (
-                      <div key={entry.id} className="border-l-2 border-[var(--color-border)] pl-3 space-y-1">
+                      <div
+                        key={entry.id}
+                        className="border-l-2 border-(--color-border) pl-3 space-y-1"
+                      >
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium capitalize">{entry.field}</span>
-                          <span className="text-xs text-[var(--color-muted-foreground)]">
-                            {formatDate(entry.changedAt)}
+                          <span className="text-sm font-medium capitalize">{entry.action}</span>
+                          <span className="text-xs text-(--color-muted-foreground)">
+                            {formatDateTime(entry.createdAt)}
                           </span>
                         </div>
-                        <p className="text-sm text-[var(--color-muted-foreground)]">
-                          Changed from <span className="font-medium">{entry.oldValue}</span> to{' '}
-                          <span className="font-medium">{entry.newValue}</span>
-                        </p>
-                        <p className="text-xs text-[var(--color-muted-foreground)]">
-                          by {entry.changedBy}
+                        {entry.changes && (
+                          <p className="text-sm text-(--color-muted-foreground)">
+                            {JSON.stringify(entry.changes)}
+                          </p>
+                        )}
+                        <p className="text-xs text-(--color-muted-foreground)">
+                          by User {entry.userId}
                         </p>
                       </div>
                     ))
@@ -400,5 +358,5 @@ function TaskDetailsPage() {
         </div>
       </Layout>
     </ProtectedRoute>
-  )
+  );
 }
