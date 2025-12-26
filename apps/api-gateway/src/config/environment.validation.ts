@@ -58,7 +58,7 @@ export class EnvironmentVariables {
 
   @IsString()
   @IsNotEmpty()
-  RABBITMQ_USER: string = 'admin';
+  RABBITMQ_USER: string = 'rabbitmq';
 
   @IsString()
   @IsNotEmpty()
