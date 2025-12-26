@@ -1,8 +1,18 @@
-import { Injectable, HttpException, HttpStatus } from '@nestjs/common';
-import axios, { AxiosRequestConfig, AxiosError } from 'axios';
+import { Injectable, HttpException, HttpStatus, Inject, Scope } from '@nestjs/common';
+import { REQUEST } from '@nestjs/core';
+import { HttpService } from '@nestjs/axios';
+import { AxiosError } from 'axios';
+import { Request } from 'express';
+import { catchError, firstValueFrom } from 'rxjs';
+import { CORRELATION_ID_HEADER } from '../middleware/correlation-id.middleware';
 
-@Injectable()
+@Injectable({ scope: Scope.REQUEST })
 export class ProxyService {
+  constructor(
+    private readonly httpService: HttpService,
+    @Inject(REQUEST) private readonly request: Request,
+  ) {}
+
   async proxyRequest(
     serviceUrl: string,
     path: string,
@@ -12,47 +22,46 @@ export class ProxyService {
     queryParams?: Record<string, unknown>,
   ): Promise<unknown> {
     try {
-      const config: AxiosRequestConfig = {
-        method: method as AxiosRequestConfig['method'],
-        url: `${serviceUrl}${path}`,
+      const url = `${serviceUrl}${path}`;
+      const correlationId = this.request.headers[CORRELATION_ID_HEADER] as string;
+
+      const response$ = this.httpService.request({
+        method: method as any,
+        url,
         headers: {
           ...headers,
           'Content-Type': 'application/json',
+          [CORRELATION_ID_HEADER]: correlationId,
         },
         data,
         params: queryParams,
-      };
+        timeout: 30000, // 30 seconds
+      }) as any;
 
-      const response = await axios(config);
-      return response.data;
+      const responseObservable = response$.pipe(
+        catchError((error: AxiosError) => {
+          throw this.handleProxyError(error);
+        }),
+      );
+
+      const response = await firstValueFrom(responseObservable);
+      return (response as any).data;
     } catch (error) {
-      this.handleProxyError(error);
+      throw error;
     }
   }
 
-  private handleProxyError(error: unknown): never {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError;
-      const status = axiosError.response?.status || HttpStatus.INTERNAL_SERVER_ERROR;
-      const message = (axiosError.response?.data as { message?: string })?.message || axiosError.message;
+  private handleProxyError(error: AxiosError): HttpException {
+    const status = error.response?.status || HttpStatus.INTERNAL_SERVER_ERROR;
+    const message = (error.response?.data as { message?: string })?.message || error.message;
 
-      throw new HttpException(
-        {
-          statusCode: status,
-          message: message,
-          error: axiosError.response?.statusText || 'Service Error',
-        },
-        status,
-      );
-    }
-
-    throw new HttpException(
+    return new HttpException(
       {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message: 'An unexpected error occurred',
-        error: 'Internal Server Error',
+        statusCode: status,
+        message: message,
+        error: error.response?.statusText || 'Service Error',
       },
-      HttpStatus.INTERNAL_SERVER_ERROR,
+      status,
     );
   }
 }
