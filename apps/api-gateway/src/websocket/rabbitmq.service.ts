@@ -1,8 +1,8 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as amqp from 'amqp-connection-manager';
 import { ChannelWrapper } from 'amqp-connection-manager';
 import { ConsumeMessage } from 'amqplib';
-import { environment } from '../config/environment';
 
 export interface NotificationPayload {
   userId: string;
@@ -19,6 +19,8 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private channelWrapper: ChannelWrapper | null = null;
   private messageHandlers: ((notification: NotificationPayload) => void)[] = [];
 
+  constructor(private readonly configService: ConfigService) {}
+
   async onModuleInit() {
     await this.connect();
   }
@@ -29,7 +31,11 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
   private async connect(): Promise<void> {
     try {
-      const { host, port, user, password, queue } = environment.rabbitmq;
+      const host = this.configService.get<string>('RABBITMQ_HOST');
+      const port = this.configService.get<number>('RABBITMQ_PORT');
+      const user = this.configService.get<string>('RABBITMQ_USER');
+      const password = this.configService.get<string>('RABBITMQ_PASSWORD');
+      const queue = this.configService.get<string>('RABBITMQ_QUEUE') || 'notifications';
       const connectionUrl = `amqp://${user}:${password}@${host}:${port}`;
 
       this.logger.log(`Connecting to RabbitMQ at ${host}:${port}...`);
@@ -56,11 +62,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       });
 
       // Connect asynchronously without blocking application startup
-      this.channelWrapper.waitForConnect().then(() => {
-        this.logger.log('RabbitMQ channel ready');
-      }).catch((error) => {
-        this.logger.error('Failed to establish RabbitMQ channel', error);
-      });
+      this.channelWrapper
+        .waitForConnect()
+        .then(() => {
+          this.logger.log('RabbitMQ channel ready');
+        })
+        .catch((error) => {
+          this.logger.error('Failed to establish RabbitMQ channel', error);
+        });
     } catch (error) {
       this.logger.error('Failed to connect to RabbitMQ', error);
       // Don't throw - allow app to start even if RabbitMQ is unavailable
@@ -100,6 +109,10 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     if (index > -1) {
       this.messageHandlers.splice(index, 1);
     }
+  }
+
+  isConnected(): boolean {
+    return this.connection !== null && this.channelWrapper !== null;
   }
 
   private async disconnect(): Promise<void> {
