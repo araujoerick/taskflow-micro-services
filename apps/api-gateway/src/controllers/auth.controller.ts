@@ -1,16 +1,25 @@
 import { Controller, Post, Get, Body, Headers, UseGuards } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProxyService } from '../proxy/proxy.service';
-import { environment } from '../config/environment';
 import { Public } from '../auth/public.decorator';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { User } from '../auth/user.decorator';
 import { ValidatedUser } from '../auth/jwt.strategy';
+import { RegisterDto, LoginDto, RefreshTokenDto } from '../dto/auth.dto';
 
 @ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly proxyService: ProxyService) {}
+  private readonly authServiceUrl: string;
+
+  constructor(
+    private readonly proxyService: ProxyService,
+    private readonly configService: ConfigService,
+  ) {
+    this.authServiceUrl =
+      this.configService.get<string>('AUTH_SERVICE_URL') || 'http://localhost:3001';
+  }
 
   @Public()
   @Post('register')
@@ -18,13 +27,8 @@ export class AuthController {
   @ApiResponse({ status: 201, description: 'User successfully registered' })
   @ApiResponse({ status: 400, description: 'Invalid input data' })
   @ApiResponse({ status: 409, description: 'Email already exists' })
-  async register(@Body() body: unknown): Promise<unknown> {
-    return this.proxyService.proxyRequest(
-      environment.services.auth,
-      '/auth/register',
-      'POST',
-      body,
-    );
+  async register(@Body() body: RegisterDto): Promise<unknown> {
+    return this.proxyService.proxyRequest(this.authServiceUrl, '/auth/register', 'POST', body);
   }
 
   @Public()
@@ -32,13 +36,8 @@ export class AuthController {
   @ApiOperation({ summary: 'Login with email and password' })
   @ApiResponse({ status: 200, description: 'Successfully logged in' })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() body: unknown): Promise<unknown> {
-    return this.proxyService.proxyRequest(
-      environment.services.auth,
-      '/auth/login',
-      'POST',
-      body,
-    );
+  async login(@Body() body: LoginDto): Promise<unknown> {
+    return this.proxyService.proxyRequest(this.authServiceUrl, '/auth/login', 'POST', body);
   }
 
   @Public()
@@ -47,12 +46,12 @@ export class AuthController {
   @ApiResponse({ status: 200, description: 'Token refreshed successfully' })
   @ApiResponse({ status: 401, description: 'Invalid or expired refresh token' })
   async refresh(
-    @Body() body: unknown,
+    @Body() body: RefreshTokenDto,
     @Headers('authorization') authHeader?: string,
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.auth,
+      this.authServiceUrl,
       '/auth/refresh',
       'POST',
       body,
@@ -72,7 +71,7 @@ export class AuthController {
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.auth,
+      this.authServiceUrl,
       '/auth/logout',
       'POST',
       undefined,
@@ -105,7 +104,7 @@ export class AuthController {
   async me(@Headers('authorization') authHeader?: string): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
     return this.proxyService.proxyRequest(
-      environment.services.auth,
+      this.authServiceUrl,
       '/auth/validate',
       'GET',
       undefined,
