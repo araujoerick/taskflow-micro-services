@@ -1,70 +1,74 @@
-import { useState, useRef, useEffect } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { useNotifications } from '@/contexts/NotificationsContext'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Bell, X, Check } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
+import {
+  useNotifications,
+  useUnreadCount,
+  useMarkAsRead,
+  useMarkAllAsRead,
+} from '@/hooks/queries/useNotifications';
+import { useWebSocket } from '@/hooks/useWebSocket';
+import { notificationTypeLabels } from '@/utils/enum-mappers';
+import { formatRelativeTime } from '@/utils/date-formatters';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Bell, X, Check } from 'lucide-react';
+import { NotificationType } from '@repo/types';
 
 export function NotificationsDropdown() {
-  const [isOpen, setIsOpen] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
-  const navigate = useNavigate()
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } =
-    useNotifications()
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+
+  const accessToken = localStorage.getItem('accessToken');
+  useWebSocket(accessToken);
+
+  const { data: notificationsData } = useNotifications({ limit: 20 });
+  const { data: unreadCount } = useUnreadCount();
+  const markAsRead = useMarkAsRead();
+  const markAllAsRead = useMarkAllAsRead();
+
+  const notifications = notificationsData?.data || [];
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setIsOpen(false)
+        setIsOpen(false);
       }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleNotificationClick = async (notification: (typeof notifications)[0]) => {
+    if (!notification.read) {
+      await markAsRead.mutateAsync([notification.id]);
     }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const handleNotificationClick = (notification: typeof notifications[0]) => {
-    markAsRead(notification.id)
     if (notification.taskId) {
-      navigate({ to: `/tasks/${notification.taskId}` })
-      setIsOpen(false)
+      navigate({ to: `/tasks/${notification.taskId}` });
+      setIsOpen(false);
     }
-  }
+  };
 
-  const formatDate = (date: string) => {
-    const now = new Date()
-    const notifDate = new Date(date)
-    const diffMs = now.getTime() - notifDate.getTime()
-    const diffMins = Math.floor(diffMs / 60000)
-    const diffHours = Math.floor(diffMins / 60)
-    const diffDays = Math.floor(diffHours / 24)
-
-    if (diffMins < 1) return 'Just now'
-    if (diffMins < 60) return `${diffMins}m ago`
-    if (diffHours < 24) return `${diffHours}h ago`
-    if (diffDays < 7) return `${diffDays}d ago`
-    return notifDate.toLocaleDateString()
-  }
-
-  const getNotificationIcon = (type: string) => {
+  const getNotificationIcon = (type: NotificationType) => {
     const icons = {
-      task_created: '📝',
-      task_updated: '✏️',
-      task_deleted: '🗑️',
-      comment_added: '💬',
-    }
-    return icons[type as keyof typeof icons] || '🔔'
-  }
+      [NotificationType.TASK_CREATED]: '📝',
+      [NotificationType.TASK_UPDATED]: '✏️',
+      [NotificationType.TASK_ASSIGNED]: '👤',
+      [NotificationType.TASK_COMMENTED]: '💬',
+    };
+    return icons[type] || '🔔';
+  };
 
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="relative p-2 hover:bg-[var(--color-accent)] rounded-md transition-colors"
+        className="relative p-2 hover:bg-(--color-accent) rounded-md transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
         <Bell className="h-5 w-5" />
-        {unreadCount > 0 && (
-          <span className="absolute top-0 right-0 h-5 w-5 rounded-full bg-[var(--color-destructive)] text-white text-xs flex items-center justify-center font-bold">
+        {unreadCount && unreadCount > 0 && (
+          <span className="absolute top-0 right-0 h-5 w-5 rounded-full bg-(--color-destructive) text-white text-xs flex items-center justify-center font-bold">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -80,7 +84,7 @@ export function NotificationsDropdown() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={markAllAsRead}
+                    onClick={() => markAllAsRead.mutate()}
                     className="text-xs"
                   >
                     <Check className="mr-1 h-3 w-3" />
@@ -93,8 +97,8 @@ export function NotificationsDropdown() {
               <div className="max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="py-8 text-center">
-                    <Bell className="mx-auto h-12 w-12 text-[var(--color-muted-foreground)] opacity-50" />
-                    <p className="mt-2 text-sm text-[var(--color-muted-foreground)]">
+                    <Bell className="mx-auto h-12 w-12 text-(--color-muted-foreground) opacity-50" />
+                    <p className="mt-2 text-sm text-(--color-muted-foreground)">
                       No notifications yet
                     </p>
                   </div>
@@ -103,30 +107,34 @@ export function NotificationsDropdown() {
                     <div
                       key={notification.id}
                       className={`
-                        border-b last:border-b-0 p-4 hover:bg-[var(--color-accent)] cursor-pointer transition-colors
-                        ${!notification.read ? 'bg-[var(--color-secondary)]' : ''}
+                        border-b last:border-b-0 p-4 hover:bg-(--color-accent) cursor-pointer transition-colors
+                        ${!notification.read ? 'bg-(--color-secondary)' : ''}
                       `}
                       onClick={() => handleNotificationClick(notification)}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="text-lg">{getNotificationIcon(notification.type)}</span>
-                            <h4 className="font-medium text-sm truncate">{notification.title}</h4>
+                            <span className="text-lg">
+                              {getNotificationIcon(notification.type)}
+                            </span>
+                            <h4 className="font-medium text-sm truncate">
+                              {notificationTypeLabels[notification.type]}
+                            </h4>
                           </div>
-                          <p className="text-sm text-[var(--color-muted-foreground)] line-clamp-2">
+                          <p className="text-sm text-(--color-muted-foreground) line-clamp-2">
                             {notification.message}
                           </p>
-                          <p className="text-xs text-[var(--color-muted-foreground)] mt-1">
-                            {formatDate(notification.createdAt)}
+                          <p className="text-xs text-(--color-muted-foreground) mt-1">
+                            {formatRelativeTime(notification.createdAt)}
                           </p>
                         </div>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            clearNotification(notification.id)
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            await markAsRead.mutateAsync([notification.id]);
                           }}
-                          className="p-1 hover:bg-[var(--color-destructive)] hover:text-white rounded transition-colors"
+                          className="p-1 hover:bg-(--color-destructive) hover:text-white rounded transition-colors"
                         >
                           <X className="h-4 w-4" />
                         </button>
@@ -140,5 +148,5 @@ export function NotificationsDropdown() {
         </div>
       )}
     </div>
-  )
+  );
 }
