@@ -4,7 +4,7 @@ import {
   IsNumber,
   IsString,
   validateSync,
-  IsUrl,
+  Matches,
   Min,
   Max,
 } from 'class-validator';
@@ -47,7 +47,8 @@ export class EnvironmentVariables {
   JWT_SECRET: string;
 
   // RabbitMQ
-  @IsUrl({ require_tld: false })
+  @IsString()
+  @Matches(/^amqps?:\/\//, { message: 'RABBITMQ_URL must be a valid AMQP URL (amqp:// or amqps://)' })
   RABBITMQ_URL: string;
 
   @IsString()
