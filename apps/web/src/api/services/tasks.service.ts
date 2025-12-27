@@ -6,7 +6,6 @@ import type {
   TaskFilters,
   PaginatedResponse,
   Comment,
-  CreateCommentDto,
   TaskHistory,
 } from '@repo/types';
 
@@ -42,8 +41,11 @@ export const tasksService = {
     return data;
   },
 
-  async addComment(taskId: string, commentData: CreateCommentDto): Promise<Comment> {
-    const { data } = await apiClient.post<Comment>(`/tasks/${taskId}/comments`, commentData);
+  async addComment(taskId: string, content: string): Promise<Comment> {
+    const { data } = await apiClient.post<Comment>(`/tasks/${taskId}/comments`, {
+      content,
+      taskId,
+    });
     return data;
   },
 
