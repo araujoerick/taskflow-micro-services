@@ -211,4 +211,27 @@ export class AuthService {
     const { password, refreshTokenId, ...result } = user;
     return result;
   }
+
+  async getUsersByIds(ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+
+    const users = await this.usersRepository
+      .createQueryBuilder('user')
+      .where('user.id IN (:...ids)', { ids })
+      .select(['user.id', 'user.name', 'user.email'])
+      .getMany();
+
+    return users;
+  }
+
+  async getAllUsers() {
+    const users = await this.usersRepository
+      .createQueryBuilder('user')
+      .select(['user.id', 'user.name', 'user.email'])
+      .getMany();
+
+    return users;
+  }
 }
