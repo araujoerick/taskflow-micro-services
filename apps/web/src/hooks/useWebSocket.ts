@@ -11,17 +11,16 @@ export function useWebSocket(accessToken: string | null) {
 
   const handleNotification = useCallback(
     (notification: Notification) => {
-      // Invalidate notifications queries to refresh the list
       queryClient.invalidateQueries({ queryKey: queryKeys.notifications.all });
 
-      // If the notification is related to a task, invalidate task queries
       if (notification.taskId) {
         queryClient.invalidateQueries({ queryKey: queryKeys.tasks.lists() });
         queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(notification.taskId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.tasks.comments(notification.taskId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.tasks.history(notification.taskId) });
       }
 
       toast.info(notification.message, {
-        description: 'Click to view details',
         duration: 5000,
       });
     },

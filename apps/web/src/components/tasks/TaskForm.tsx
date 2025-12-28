@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,6 +26,7 @@ import { TaskStatus, TaskPriority } from '@repo/types';
 import type { Task } from '@repo/types';
 import { createTaskSchema, type CreateTaskInput } from '@/schemas/task.schema';
 import { taskStatusLabels, taskPriorityLabels } from '@/utils/enum-mappers';
+import { authService } from '@/api/services/auth.service';
 
 interface TaskFormProps {
   open: boolean;
@@ -36,6 +38,12 @@ interface TaskFormProps {
 
 export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: TaskFormProps) {
   const isEditing = !!task;
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users', 'all'],
+    queryFn: () => authService.getAllUsers(),
+    enabled: open,
+  });
 
   const {
     register,
@@ -80,6 +88,7 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
 
   const status = watch('status');
   const priority = watch('priority');
+  const assignedToId = watch('assignedToId');
 
   const handleFormSubmit = async (data: CreateTaskInput) => {
     await onSubmit(data);
@@ -169,6 +178,28 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
           <div className="space-y-2">
             <Label htmlFor="dueDate">Due Date</Label>
             <Input id="dueDate" type="date" {...register('dueDate')} />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Assign To</Label>
+            <Select
+              value={assignedToId || ''}
+              onValueChange={(value) =>
+                setValue('assignedToId', value === 'unassigned' ? '' : value)
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a user" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <DialogFooter>

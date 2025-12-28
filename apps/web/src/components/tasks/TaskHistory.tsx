@@ -25,6 +25,17 @@ const actionLabels: Record<TaskAction, string> = {
   [TaskAction.COMMENTED]: 'added a comment',
 };
 
+const displayableFields = ['title', 'description', 'status', 'priority', 'dueDate'];
+
+function formatChangeValue(key: string, value: unknown): string {
+  if (value === null || value === undefined) return 'None';
+  if (key === 'dueDate' && typeof value === 'string') {
+    return new Date(value).toLocaleDateString();
+  }
+  if (typeof value === 'object') return '';
+  return String(value);
+}
+
 export function TaskHistory({ taskId }: TaskHistoryProps) {
   const { data: history, isLoading } = useTaskHistory(taskId);
 
@@ -90,14 +101,18 @@ export function TaskHistory({ taskId }: TaskHistoryProps) {
 
                   {item.changes && Object.keys(item.changes).length > 0 && (
                     <Card className="mt-2 p-3 text-xs">
-                      {Object.entries(item.changes).map(([key, value]) => (
-                        <div key={key} className="flex items-center gap-2">
-                          <span className="font-medium capitalize">{key}:</span>
-                          <span className="text-muted-foreground">
-                            {typeof value === 'object' ? JSON.stringify(value) : String(value)}
-                          </span>
-                        </div>
-                      ))}
+                      {Object.entries(item.changes)
+                        .filter(([key]) => displayableFields.includes(key))
+                        .map(([key, value]) => {
+                          const formattedValue = formatChangeValue(key, value);
+                          if (!formattedValue) return null;
+                          return (
+                            <div key={key} className="flex items-center gap-2">
+                              <span className="font-medium capitalize">{key}:</span>
+                              <span className="text-muted-foreground">{formattedValue}</span>
+                            </div>
+                          );
+                        })}
                     </Card>
                   )}
 
