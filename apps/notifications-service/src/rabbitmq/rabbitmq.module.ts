@@ -1,10 +1,9 @@
 import { Module } from '@nestjs/common';
-import { RabbitMQService } from './rabbitmq.service';
+import { RabbitMQController } from './rabbitmq.controller';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
   imports: [NotificationsModule],
-  providers: [RabbitMQService],
-  exports: [RabbitMQService],
+  controllers: [RabbitMQController],
 })
 export class RabbitMQModule {}
