@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Body, Headers, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Headers, Query, UseGuards } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { ProxyService } from '../proxy/proxy.service';
@@ -106,6 +106,43 @@ export class AuthController {
     return this.proxyService.proxyRequest(
       this.authServiceUrl,
       '/auth/validate',
+      'GET',
+      undefined,
+      headers,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('users')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get users by IDs' })
+  @ApiResponse({ status: 200, description: 'List of users' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getUsersByIds(
+    @Headers('authorization') authHeader: string,
+    @Query('ids') ids: string,
+  ): Promise<unknown> {
+    const headers = { authorization: authHeader };
+    return this.proxyService.proxyRequest(
+      this.authServiceUrl,
+      `/auth/users?ids=${ids}`,
+      'GET',
+      undefined,
+      headers,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('users/all')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get all users' })
+  @ApiResponse({ status: 200, description: 'List of all users' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getAllUsers(@Headers('authorization') authHeader: string): Promise<unknown> {
+    const headers = { authorization: authHeader };
+    return this.proxyService.proxyRequest(
+      this.authServiceUrl,
+      '/auth/users/all',
       'GET',
       undefined,
       headers,

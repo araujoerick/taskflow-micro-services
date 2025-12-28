@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Get,
+  Query,
   UseGuards,
   Req,
   HttpCode,
@@ -59,5 +60,18 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async logout(@Req() req: RequestWithUser) {
     return this.authService.logout(req.user.id);
+  }
+
+  @Get('users')
+  @UseGuards(JwtAuthGuard)
+  async getUsersByIds(@Query('ids') ids: string) {
+    const userIds = ids.split(',').filter((id) => id.trim());
+    return this.authService.getUsersByIds(userIds);
+  }
+
+  @Get('users/all')
+  @UseGuards(JwtAuthGuard)
+  async getAllUsers() {
+    return this.authService.getAllUsers();
   }
 }
