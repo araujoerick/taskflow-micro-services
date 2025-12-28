@@ -44,7 +44,6 @@ export const tasksService = {
   async addComment(taskId: string, content: string): Promise<Comment> {
     const { data } = await apiClient.post<Comment>(`/tasks/${taskId}/comments`, {
       content,
-      taskId,
     });
     return data;
   },
