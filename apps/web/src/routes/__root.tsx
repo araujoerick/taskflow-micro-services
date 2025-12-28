@@ -30,7 +30,7 @@ function RootComponent() {
       <main className={isAuthenticated ? 'pt-16' : ''}>
         <Outlet />
       </main>
-      <Toaster richColors position="top-right" />
+      <Toaster richColors position="bottom-right" />
       {import.meta.env.DEV && <TanStackRouterDevtools position="bottom-right" />}
     </div>
   );
