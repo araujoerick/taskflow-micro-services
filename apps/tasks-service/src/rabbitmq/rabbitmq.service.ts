@@ -1,4 +1,9 @@
-import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  OnModuleInit,
+  OnModuleDestroy,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import * as amqp from 'amqplib';
 
@@ -29,7 +34,8 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   private readonly maxReconnectAttempts = 5;
 
   constructor(private configService: ConfigService) {
-    this.queueName = this.configService.get<string>('RABBITMQ_QUEUE') || 'task-events';
+    this.queueName =
+      this.configService.get<string>('RABBITMQ_QUEUE') || 'task-events';
   }
 
   async onModuleInit(): Promise<void> {
@@ -51,7 +57,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
 
       this.isHealthy = true;
       this.reconnectAttempts = 0;
-      this.logger.log(`Connected to RabbitMQ and queue "${this.queueName}" asserted`);
+      this.logger.log(
+        `Connected to RabbitMQ and queue "${this.queueName}" asserted`,
+      );
 
       // Handle connection errors
       this.connection.on('error', (err: Error) => {
@@ -81,7 +89,9 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     this.reconnectAttempts++;
     const delay = Math.min(1000 * Math.pow(2, this.reconnectAttempts), 30000);
 
-    this.logger.log(`Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`);
+    this.logger.log(
+      `Attempting to reconnect in ${delay}ms (attempt ${this.reconnectAttempts})`,
+    );
 
     setTimeout(() => void this.connect(), delay);
   }
@@ -89,10 +99,14 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
   async onModuleDestroy() {
     try {
       if (this.channel) {
-        await (this.channel as unknown as { close: () => Promise<void> }).close();
+        await (
+          this.channel as unknown as { close: () => Promise<void> }
+        ).close();
       }
       if (this.connection) {
-        await (this.connection as unknown as { close: () => Promise<void> }).close();
+        await (
+          this.connection as unknown as { close: () => Promise<void> }
+        ).close();
       }
       this.logger.log('RabbitMQ connection closed');
     } catch (error) {
@@ -120,7 +134,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
         timestamp: new Date(),
       };
 
-      const message = Buffer.from(JSON.stringify(payload));
+      const nestjsMessage = {
+        pattern: event,
+        data: payload,
+      };
+
+      const message = Buffer.from(JSON.stringify(nestjsMessage));
       this.channel.sendToQueue(this.queueName, message, { persistent: true });
 
       this.logger.log(`Event published: ${event} for task ${taskId}`);
