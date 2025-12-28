@@ -5,6 +5,7 @@ export interface TaskCreatedMetadata {
   taskTitle: string;
   taskStatus: string;
   taskPriority: string;
+  createdBy?: string;
 }
 
 /**
