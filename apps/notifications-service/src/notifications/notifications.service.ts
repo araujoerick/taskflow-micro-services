@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import { Notification, NotificationType } from './entities/notification.entity';
 import { FilterNotificationDto } from './dto/filter-notification.dto';
 import { MarkAsReadDto } from './dto/mark-as-read.dto';
+import { WebSocketPublisherService } from '../websocket/websocket-publisher.service';
 import type {
   TaskEventPayload,
   TaskCreatedData,
@@ -19,6 +20,7 @@ export class NotificationsService {
   constructor(
     @InjectRepository(Notification)
     private notificationRepository: Repository<Notification>,
+    private readonly webSocketPublisher: WebSocketPublisherService,
   ) {}
 
   async createTaskCreatedNotification(
@@ -26,24 +28,35 @@ export class NotificationsService {
   ) {
     const { taskId, userId, data } = payload;
 
-    // Notify task creator (if needed) and other interested users
-    // For now, we'll create a notification for the creator
+    // Only notify the assignee if one exists and it's not the creator
+    if (!data.assignedToId || data.assignedToId === userId) {
+      this.logger.log(
+        `No notification needed for TASK_CREATED - no assignee or self-assignment`,
+      );
+      return null;
+    }
+
     const notification = this.notificationRepository.create({
-      userId,
+      userId: data.assignedToId,
       type: NotificationType.TASK_CREATED,
-      message: `Task "${data.title}" has been created`,
+      message: `You have been assigned to a new task "${data.title}"`,
       taskId,
       metadata: {
         taskTitle: data.title,
         taskStatus: data.status,
         taskPriority: data.priority,
+        createdBy: userId,
       },
     });
 
-    await this.notificationRepository.save(notification);
-    this.logger.log(`Created TASK_CREATED notification for user ${userId}`);
+    const saved = await this.notificationRepository.save(notification);
+    this.logger.log(
+      `Created TASK_CREATED notification for assignee ${data.assignedToId}`,
+    );
 
-    return notification;
+    await this.webSocketPublisher.publishNotification(saved);
+
+    return saved;
   }
 
   async createTaskUpdatedNotification(
@@ -89,6 +102,9 @@ export class NotificationsService {
 
         const saved = await transactionalEntityManager.save(notifications);
         this.logger.log(`Created ${saved.length} TASK_UPDATED notifications`);
+
+        await this.webSocketPublisher.publishNotifications(saved);
+
         return saved;
       },
     );
@@ -114,12 +130,14 @@ export class NotificationsService {
         },
       });
 
-      await this.notificationRepository.save(notification);
+      const saved = await this.notificationRepository.save(notification);
       this.logger.log(
         `Created TASK_ASSIGNED notification for user ${data.assignedToId}`,
       );
 
-      return notification;
+      await this.webSocketPublisher.publishNotification(saved);
+
+      return saved;
     }
 
     return null;
@@ -130,18 +148,41 @@ export class NotificationsService {
   ) {
     const { taskId, userId, data } = payload;
 
-    // Notify task creator and assignee (if they're not the commenter)
+    this.logger.log(
+      `Processing TASK_COMMENTED - taskId: ${taskId}, commenter: ${userId}, creator: ${data.createdById}, assignee: ${data.assignedToId}, previousCommenters: ${data.previousCommenterIds?.length || 0}`,
+    );
+
+    // Notify task creator, assignee, and previous commenters (if they're not the current commenter)
     const usersToNotify = new Set<string>();
 
+    // Add assignee
     if (data.assignedToId && data.assignedToId !== userId) {
       usersToNotify.add(data.assignedToId);
+      this.logger.log(`Will notify assignee: ${data.assignedToId}`);
     }
 
+    // Add creator
     if (data.createdById && data.createdById !== userId) {
       usersToNotify.add(data.createdById);
+      this.logger.log(`Will notify creator: ${data.createdById}`);
+    }
+
+    // Add all previous commenters
+    if (data.previousCommenterIds && data.previousCommenterIds.length > 0) {
+      for (const commenterId of data.previousCommenterIds) {
+        if (commenterId !== userId) {
+          usersToNotify.add(commenterId);
+        }
+      }
+      this.logger.log(
+        `Will also notify ${data.previousCommenterIds.length} previous commenters`,
+      );
     }
 
     if (usersToNotify.size === 0) {
+      this.logger.warn(
+        `No users to notify - commenter is the only participant`,
+      );
       return [];
     }
 
@@ -168,6 +209,9 @@ export class NotificationsService {
 
         const saved = await transactionalEntityManager.save(notifications);
         this.logger.log(`Created ${saved.length} TASK_COMMENTED notifications`);
+
+        await this.webSocketPublisher.publishNotifications(saved);
+
         return saved;
       },
     );
