@@ -4,7 +4,10 @@ import { Repository } from 'typeorm';
 import { Comment } from './entities/comment.entity';
 import { CreateCommentDto } from './dto/create-comment.dto';
 import { Task } from '../tasks/entities/task.entity';
-import { TaskHistory, TaskAction } from '../history/entities/task-history.entity';
+import {
+  TaskHistory,
+  TaskAction,
+} from '../history/entities/task-history.entity';
 import { RabbitMQService, TaskEvent } from '../rabbitmq/rabbitmq.service';
 import { HistoryChanges } from '../history/interfaces/history-changes.interface';
 
@@ -22,7 +25,11 @@ export class CommentsService {
     private rabbitmqService: RabbitMQService,
   ) {}
 
-  async create(taskId: string, createCommentDto: CreateCommentDto, userId: string): Promise<Comment> {
+  async create(
+    taskId: string,
+    createCommentDto: CreateCommentDto,
+    userId: string,
+  ): Promise<Comment> {
     this.logger.log(`Creating comment on task ${taskId} by user ${userId}`);
 
     // Verify task exists
@@ -39,17 +46,35 @@ export class CommentsService {
 
     const savedComment = await this.commentsRepository.save(comment);
 
-    this.logger.log(`Comment ${savedComment.id} created successfully on task ${taskId}`);
+    this.logger.log(
+      `Comment ${savedComment.id} created successfully on task ${taskId}`,
+    );
 
     // Record history
     await this.createHistory(taskId, userId, { comment: savedComment });
 
-    // Publish event
+    // Get all users who have previously commented on this task (excluding current commenter)
+    const previousCommenters = await this.commentsRepository
+      .createQueryBuilder('comment')
+      .select('DISTINCT comment.userId', 'userId')
+      .where('comment.taskId = :taskId', { taskId })
+      .andWhere('comment.userId != :userId', { userId })
+      .getRawMany<{ userId: string }>();
+
+    const previousCommenterIds = previousCommenters.map((c) => c.userId);
+
     await this.rabbitmqService.publishEvent(
       TaskEvent.TASK_COMMENTED,
       taskId,
       userId,
-      { comment: savedComment },
+      {
+        title: task.title,
+        createdById: task.createdBy,
+        assignedToId: task.assignedTo,
+        commentId: savedComment.id,
+        commentText: savedComment.content,
+        previousCommenterIds,
+      },
     );
 
     return savedComment;
@@ -70,7 +95,11 @@ export class CommentsService {
     return comments;
   }
 
-  private async createHistory(taskId: string, userId: string, changes: HistoryChanges): Promise<void> {
+  private async createHistory(
+    taskId: string,
+    userId: string,
+    changes: HistoryChanges,
+  ): Promise<void> {
     const history = this.historyRepository.create({
       taskId,
       userId,

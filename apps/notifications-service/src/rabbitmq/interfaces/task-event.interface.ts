@@ -63,6 +63,7 @@ export interface TaskCommentedData {
   assignedToId?: string;
   commentId: string;
   commentText?: string;
+  previousCommenterIds?: string[];
 }
 
 /**
