@@ -1,6 +1,12 @@
 import { apiClient } from '../client';
 import type { User, LoginDto, CreateUserDto, AuthResponse } from '@repo/types';
 
+export interface UserBasicInfo {
+  id: string;
+  name: string;
+  email: string;
+}
+
 export const authService = {
   async login(credentials: LoginDto): Promise<AuthResponse> {
     const { data } = await apiClient.post<AuthResponse>('/auth/login', credentials);
@@ -24,5 +30,16 @@ export const authService = {
 
   async logout(): Promise<void> {
     await apiClient.post('/auth/logout');
+  },
+
+  async getUsersByIds(ids: string[]): Promise<UserBasicInfo[]> {
+    if (ids.length === 0) return [];
+    const { data } = await apiClient.get<UserBasicInfo[]>(`/auth/users?ids=${ids.join(',')}`);
+    return data;
+  },
+
+  async getAllUsers(): Promise<UserBasicInfo[]> {
+    const { data } = await apiClient.get<UserBasicInfo[]>('/auth/users/all');
+    return data;
   },
 };

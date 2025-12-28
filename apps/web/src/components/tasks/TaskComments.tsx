@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useQuery } from '@tanstack/react-query';
 import { Send, MessageSquare, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useTaskComments, useAddComment } from '@/hooks/queries/useTasks';
 import { commentSchema, type CommentInput } from '@/schemas/task.schema';
 import { formatRelativeTime } from '@/utils/date-formatters';
+import { authService, type UserBasicInfo } from '@/api/services/auth.service';
 import { toast } from 'sonner';
 
 interface TaskCommentsProps {
@@ -17,6 +20,43 @@ interface TaskCommentsProps {
 export function TaskComments({ taskId }: TaskCommentsProps) {
   const { data: comments, isLoading } = useTaskComments(taskId);
   const addComment = useAddComment();
+
+  // Get unique user IDs from comments
+  const userIds = useMemo(() => {
+    if (!comments) return [];
+    return [...new Set(comments.map((c) => c.userId))];
+  }, [comments]);
+
+  const { data: users } = useQuery({
+    queryKey: ['users', userIds],
+    queryFn: () => authService.getUsersByIds(userIds),
+    enabled: userIds.length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  const usersMap = useMemo(() => {
+    const map = new Map<string, UserBasicInfo>();
+    users?.forEach((user) => map.set(user.id, user));
+    return map;
+  }, [users]);
+
+  const getUserName = (userId: string): string => {
+    const user = usersMap.get(userId);
+    return user?.name || 'Unknown User';
+  };
+
+  const getUserInitials = (userId: string): string => {
+    const user = usersMap.get(userId);
+    if (user?.name) {
+      return user.name
+        .split(' ')
+        .map((n) => n[0])
+        .join('')
+        .toUpperCase()
+        .slice(0, 2);
+    }
+    return userId.slice(0, 2).toUpperCase();
+  };
 
   const {
     register,
@@ -94,11 +134,11 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
             <Card key={comment.id} className="p-4">
               <div className="flex items-start gap-3">
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium">
-                  {comment.userId.slice(0, 2).toUpperCase()}
+                  {getUserInitials(comment.userId)}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-sm font-medium">User</span>
+                    <span className="text-sm font-medium">{getUserName(comment.userId)}</span>
                     <span className="text-xs text-muted-foreground">
                       {formatRelativeTime(comment.createdAt)}
                     </span>
