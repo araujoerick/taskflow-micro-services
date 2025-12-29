@@ -132,6 +132,38 @@ export class WebSocketPublisherService
     }
   }
 
+  /**
+   * Publish a task_changed event for cache invalidation across all users
+   * without creating a notification record
+   */
+  async publishTaskChanged(taskId: string, type: string): Promise<void> {
+    if (!this.isHealthy || !this.channel) {
+      this.logger.warn('Cannot publish task_changed: RabbitMQ not connected');
+      return;
+    }
+
+    try {
+      // Create a minimal payload that triggers task_changed broadcast
+      const payload: WebSocketNotificationPayload = {
+        id: `task-deleted-${taskId}`,
+        userId: 'system',
+        type: type,
+        message: 'Task deleted',
+        taskId: taskId,
+        metadata: null,
+        read: true,
+        createdAt: new Date(),
+      };
+
+      const message = Buffer.from(JSON.stringify(payload));
+      this.channel.sendToQueue(this.queueName, message, { persistent: true });
+
+      this.logger.log(`Published task_changed event for task ${taskId}`);
+    } catch (error) {
+      this.logger.error('Failed to publish task_changed event', error);
+    }
+  }
+
   isConnected(): boolean {
     return this.isHealthy;
   }

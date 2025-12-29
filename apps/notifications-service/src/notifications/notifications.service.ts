@@ -307,9 +307,26 @@ export class NotificationsService {
     return { count };
   }
 
+  async delete(id: string, userId: string) {
+    const notification = await this.notificationRepository.findOne({
+      where: { id, userId },
+    });
+
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    await this.notificationRepository.remove(notification);
+
+    this.logger.log(`Deleted notification ${id} for user ${userId}`);
+
+    return { message: 'Notification deleted successfully' };
+  }
+
   /**
-   * Mark notifications related to a deleted task as obsolete
-   * This updates the metadata to indicate the task was deleted
+   * Handle task deleted event
+   * - Marks existing notifications as obsolete
+   * - Publishes task_changed event for cache invalidation across all users
    */
   async handleTaskDeleted(payload: TaskEventPayload): Promise<void> {
     const { taskId } = payload;
@@ -326,5 +343,7 @@ export class NotificationsService {
     this.logger.log(
       `Marked ${result.affected || 0} notifications as obsolete for deleted task ${taskId}`,
     );
+
+    await this.webSocketPublisher.publishTaskChanged(taskId, 'TASK_DELETED');
   }
 }

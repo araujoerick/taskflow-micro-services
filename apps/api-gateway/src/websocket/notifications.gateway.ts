@@ -113,6 +113,15 @@ export class NotificationsGateway
     } else {
       this.logger.debug(`No active connections for user ${userId}`);
     }
+
+    // Broadcast task_changed event to all connected users for cache invalidation
+    if (notification.taskId) {
+      this.server.emit('task_changed', {
+        taskId: notification.taskId,
+        type: notification.type,
+      });
+      this.logger.debug(`Broadcast task_changed for task ${notification.taskId}`);
+    }
   }
 
   private extractToken(client: Socket): string | null {
@@ -172,5 +181,11 @@ export class NotificationsGateway
   // Check if user is connected
   isUserConnected(userId: string): boolean {
     return this.connectedUsers.has(userId) && (this.connectedUsers.get(userId)?.size ?? 0) > 0;
+  }
+
+  // Broadcast to all connected users
+  broadcastToAll(event: string, data: unknown): void {
+    this.server.emit(event, data);
+    this.logger.debug(`Broadcast ${event} to all connected users`);
   }
 }
