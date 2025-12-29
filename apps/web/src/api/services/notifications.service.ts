@@ -28,4 +28,8 @@ export const notificationsService = {
   async markAllAsRead(): Promise<void> {
     await apiClient.post('/notifications/mark-all-as-read');
   },
+
+  async deleteNotification(id: string): Promise<void> {
+    await apiClient.delete(`/notifications/${id}`);
+  },
 };

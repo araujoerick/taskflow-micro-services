@@ -5,6 +5,7 @@ import {
   useUnreadCount,
   useMarkAsRead,
   useMarkAllAsRead,
+  useDeleteNotification,
 } from '@/hooks/queries/useNotifications';
 import { useWebSocket } from '@/hooks/useWebSocket';
 import { notificationTypeLabels } from '@/utils/enum-mappers';
@@ -26,6 +27,7 @@ export function NotificationsDropdown() {
   const { data: unreadCount } = useUnreadCount();
   const markAsRead = useMarkAsRead();
   const markAllAsRead = useMarkAllAsRead();
+  const deleteNotification = useDeleteNotification();
 
   const notifications = notificationsData?.data || [];
 
@@ -67,9 +69,13 @@ export function NotificationsDropdown() {
         onClick={() => setIsOpen(!isOpen)}
       >
         <Bell className="h-5 w-5" />
-        {unreadCount && unreadCount > 0 && (
+        {unreadCount && unreadCount > 0 ? (
           <span className="absolute top-0 right-0 h-5 w-5 rounded-full bg-(--color-destructive) text-white text-xs flex items-center justify-center font-bold">
             {unreadCount > 9 ? '9+' : unreadCount}
+          </span>
+        ) : (
+          <span className="absolute top-0 right-0 h-5 w-5 rounded-full bg-(--color-muted-foreground) text-white text-xs flex items-center justify-center font-bold">
+            0
           </span>
         )}
       </button>
@@ -79,7 +85,7 @@ export function NotificationsDropdown() {
           <Card className="shadow-lg">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-lg">Notifications</CardTitle>
+                <CardTitle className="text-lg">Notificações</CardTitle>
                 {notifications.length > 0 && (
                   <Button
                     variant="ghost"
@@ -88,7 +94,7 @@ export function NotificationsDropdown() {
                     className="text-xs"
                   >
                     <Check className="mr-1 h-3 w-3" />
-                    Mark all read
+                    Marcar todas como lidas
                   </Button>
                 )}
               </div>
@@ -99,7 +105,7 @@ export function NotificationsDropdown() {
                   <div className="py-8 text-center">
                     <Bell className="mx-auto h-12 w-12 text-(--color-muted-foreground) opacity-50" />
                     <p className="mt-2 text-sm text-(--color-muted-foreground)">
-                      No notifications yet
+                      Nenhuma notificação ainda
                     </p>
                   </div>
                 ) : (
@@ -132,9 +138,10 @@ export function NotificationsDropdown() {
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
-                            await markAsRead.mutateAsync([notification.id]);
+                            await deleteNotification.mutateAsync(notification.id);
                           }}
                           className="p-1 hover:bg-(--color-destructive) hover:text-white rounded transition-colors"
+                          title="Excluir notificação"
                         >
                           <X className="h-4 w-4" />
                         </button>
