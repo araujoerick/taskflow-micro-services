@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router';
+import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { TaskDetails } from '@/components/tasks/TaskDetails';
 import { TaskComments } from '@/components/tasks/TaskComments';
@@ -7,6 +8,7 @@ import { TaskHistory } from '@/components/tasks/TaskHistory';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { DeleteTaskDialog } from '@/components/tasks/DeleteTaskDialog';
 import { useTask, useUpdateTask, useDeleteTask } from '@/hooks/queries/useTasks';
+import { authService } from '@/api/services/auth.service';
 import type { CreateTaskInput } from '@/schemas/task.schema';
 
 export const Route = createFileRoute('/tasks/$taskId')({
@@ -30,6 +32,24 @@ function TaskDetailsPage() {
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
 
+  // Fetch assignee name if task has an assigned user
+  const userIds = useMemo(() => {
+    if (!task?.assignedTo) return [];
+    return [task.assignedTo];
+  }, [task?.assignedTo]);
+
+  const { data: users } = useQuery({
+    queryKey: ['users', userIds],
+    queryFn: () => authService.getUsersByIds(userIds),
+    enabled: userIds.length > 0,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const assigneeName = useMemo(() => {
+    if (!task?.assignedTo || !users) return undefined;
+    return users.find((u) => u.id === task.assignedTo)?.name;
+  }, [task?.assignedTo, users]);
+
   const handleUpdateTask = async (data: CreateTaskInput) => {
     try {
       await updateTask.mutateAsync({
@@ -39,13 +59,13 @@ function TaskDetailsPage() {
           description: data.description || '',
           status: data.status,
           priority: data.priority,
-          dueDate: data.dueDate ? new Date(data.dueDate) : undefined,
+          dueDate: data.dueDate || undefined,
           assignedToId: data.assignedToId || undefined,
         },
       });
-      toast.success('Task updated successfully');
+      toast.success('Tarefa atualizada com sucesso');
     } catch {
-      toast.error('Failed to update task');
+      toast.error('Falha ao atualizar tarefa');
       throw new Error('Failed to update task');
     }
   };
@@ -53,10 +73,10 @@ function TaskDetailsPage() {
   const handleDeleteTask = async () => {
     try {
       await deleteTask.mutateAsync(taskId);
-      toast.success('Task deleted successfully');
+      toast.success('Tarefa excluída com sucesso');
       navigate({ to: '/tasks' });
     } catch {
-      toast.error('Failed to delete task');
+      toast.error('Falha ao excluir tarefa');
     }
   };
 
@@ -68,6 +88,7 @@ function TaskDetailsPage() {
           isLoading={isLoading}
           onEdit={() => setIsFormOpen(true)}
           onDelete={() => setIsDeleteOpen(true)}
+          assigneeName={assigneeName}
         />
 
         {task && (

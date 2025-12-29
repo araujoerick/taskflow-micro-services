@@ -72,7 +72,7 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
         status: task.status || TaskStatus.TODO,
         priority: task.priority || TaskPriority.MEDIUM,
         dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
-        assignedToId: task.assignedToId || '',
+        assignedToId: task.assignedTo || '',
       });
     } else {
       reset({
@@ -107,18 +107,18 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEditing ? 'Edit Task' : 'Create Task'}</DialogTitle>
+          <DialogTitle>{isEditing ? 'Editar Tarefa' : 'Criar Tarefa'}</DialogTitle>
           <DialogDescription>
-            {isEditing ? 'Make changes to your task here.' : 'Add a new task to your list.'}
+            {isEditing ? 'Faça alterações na sua tarefa aqui.' : 'Adicione uma nova tarefa à sua lista.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">Título *</Label>
             <Input
               id="title"
-              placeholder="Enter task title"
+              placeholder="Digite o título da tarefa"
               {...register('title')}
               aria-invalid={!!errors.title}
             />
@@ -126,13 +126,15 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">Descrição *</Label>
             <Textarea
               id="description"
-              placeholder="Enter task description (optional)"
+              placeholder="Digite a descrição da tarefa"
               rows={3}
               {...register('description')}
+              aria-invalid={!!errors.description}
             />
+            {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -156,7 +158,7 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
             </div>
 
             <div className="space-y-2">
-              <Label>Priority</Label>
+              <Label>Prioridade</Label>
               <Select
                 value={priority}
                 onValueChange={(value) => setValue('priority', value as TaskPriority)}
@@ -176,12 +178,12 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="dueDate">Due Date</Label>
+            <Label htmlFor="dueDate">Data de Vencimento</Label>
             <Input id="dueDate" type="date" {...register('dueDate')} />
           </div>
 
           <div className="space-y-2">
-            <Label>Assign To</Label>
+            <Label>Atribuir Para</Label>
             <Select
               value={assignedToId || ''}
               onValueChange={(value) =>
@@ -189,10 +191,10 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
               }
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select a user" />
+                <SelectValue placeholder="Selecione um usuário" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="unassigned">Unassigned</SelectItem>
+                <SelectItem value="unassigned">Não atribuído</SelectItem>
                 {users.map((user) => (
                   <SelectItem key={user.id} value={user.id}>
                     {user.name}
@@ -204,11 +206,11 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => handleClose(false)}>
-              Cancel
+              Cancelar
             </Button>
             <Button type="submit" disabled={isLoading}>
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditing ? 'Save Changes' : 'Create Task'}
+              {isEditing ? 'Salvar Alterações' : 'Criar Tarefa'}
             </Button>
           </DialogFooter>
         </form>
