@@ -5,12 +5,15 @@ import {
   Logger,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, ILike } from 'typeorm';
+import { Repository } from 'typeorm';
 import { Task } from './entities/task.entity';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { FilterTaskDto } from './dto/filter-task.dto';
-import { TaskHistory, TaskAction } from '../history/entities/task-history.entity';
+import {
+  TaskHistory,
+  TaskAction,
+} from '../history/entities/task-history.entity';
 import { RabbitMQService, TaskEvent } from '../rabbitmq/rabbitmq.service';
 import { HistoryChanges } from '../history/interfaces/history-changes.interface';
 
@@ -38,27 +41,37 @@ export class TasksService {
 
     this.logger.log(`Task ${savedTask.id} created successfully`);
 
-    // Record history
-    await this.createHistory(
-      savedTask.id,
-      userId,
-      TaskAction.CREATED,
-      { task: savedTask },
-    );
+    await this.createHistory(savedTask.id, userId, TaskAction.CREATED, {
+      task: savedTask,
+    });
 
-    // Publish event
     await this.rabbitmqService.publishEvent(
       TaskEvent.TASK_CREATED,
       savedTask.id,
       userId,
-      savedTask,
+      {
+        title: savedTask.title,
+        description: savedTask.description,
+        status: savedTask.status,
+        priority: savedTask.priority,
+        createdById: savedTask.createdBy,
+        assignedToId: savedTask.assignedTo,
+      },
     );
 
     return savedTask;
   }
 
   async findAll(filterDto: FilterTaskDto) {
-    const { page = 1, limit = 10, status, priority, assignedTo, createdBy, search } = filterDto;
+    const {
+      page = 1,
+      limit = 10,
+      status,
+      priority,
+      assignedTo,
+      createdBy,
+      search,
+    } = filterDto;
 
     const queryBuilder = this.tasksRepository.createQueryBuilder('task');
 
@@ -118,7 +131,11 @@ export class TasksService {
     return task;
   }
 
-  async update(id: string, updateTaskDto: UpdateTaskDto, userId: string): Promise<Task> {
+  async update(
+    id: string,
+    updateTaskDto: UpdateTaskDto,
+    userId: string,
+  ): Promise<Task> {
     this.logger.log(`Updating task ${id} by user ${userId}`);
 
     const task = await this.findOne(id);
@@ -126,9 +143,22 @@ export class TasksService {
     // Check permissions
     this.checkPermissions(task, userId, 'update');
 
-    const oldData = { ...task };
+    // Store old values before update
+    const oldData = {
+      title: task.title,
+      description: task.description,
+      status: task.status,
+      priority: task.priority,
+      assignedTo: task.assignedTo,
+    };
+
     Object.assign(task, updateTaskDto);
-    const updatedTask = await this.tasksRepository.save(task);
+    await this.tasksRepository.save(task);
+
+    // Reload the task to get all fields properly
+    const updatedTask = await this.tasksRepository.findOneOrFail({
+      where: { id },
+    });
 
     this.logger.log(`Task ${id} updated successfully`);
 
@@ -140,21 +170,54 @@ export class TasksService {
       action = TaskAction.ASSIGNED;
     }
 
-    // Record history
+    // Build changes object for the notification
+    const changes: Record<string, { old: unknown; new: unknown }> = {};
+    if (oldData.title !== updatedTask.title) {
+      changes.title = { old: oldData.title, new: updatedTask.title };
+    }
+    if (oldData.description !== updatedTask.description) {
+      changes.description = {
+        old: oldData.description,
+        new: updatedTask.description,
+      };
+    }
+    if (oldData.status !== updatedTask.status) {
+      changes.status = { old: oldData.status, new: updatedTask.status };
+    }
+    if (oldData.priority !== updatedTask.priority) {
+      changes.priority = { old: oldData.priority, new: updatedTask.priority };
+    }
+    if (oldData.assignedTo !== updatedTask.assignedTo) {
+      changes.assignedTo = {
+        old: oldData.assignedTo,
+        new: updatedTask.assignedTo,
+      };
+    }
+
     await this.createHistory(id, userId, action, {
       before: oldData,
-      after: updatedTask,
+      after: {
+        title: updatedTask.title,
+        description: updatedTask.description,
+        status: updatedTask.status,
+        priority: updatedTask.priority,
+        assignedTo: updatedTask.assignedTo,
+      },
     });
 
-    // Publish event
     let event = TaskEvent.TASK_UPDATED;
     if (action === TaskAction.ASSIGNED) {
       event = TaskEvent.TASK_ASSIGNED;
     }
 
     await this.rabbitmqService.publishEvent(event, id, userId, {
-      before: oldData,
-      after: updatedTask,
+      title: updatedTask.title,
+      description: updatedTask.description,
+      status: updatedTask.status,
+      priority: updatedTask.priority,
+      createdById: updatedTask.createdBy,
+      assignedToId: updatedTask.assignedTo,
+      changes,
     });
 
     return updatedTask;
@@ -172,15 +235,15 @@ export class TasksService {
 
     this.logger.log(`Task ${id} deleted successfully`);
 
-    // Record history
-    await this.createHistory(id, userId, TaskAction.DELETED, { task });
-
-    // Publish event
     await this.rabbitmqService.publishEvent(
       TaskEvent.TASK_DELETED,
       id,
       userId,
-      { task },
+      {
+        title: task.title,
+        createdById: task.createdBy,
+        assignedToId: task.assignedTo,
+      },
     );
 
     return { message: 'Task deleted successfully' };
@@ -197,16 +260,24 @@ export class TasksService {
     return history;
   }
 
-  private checkPermissions(task: Task, userId: string, action: 'update' | 'delete'): void {
+  private checkPermissions(
+    task: Task,
+    userId: string,
+    action: 'update' | 'delete',
+  ): void {
     const isCreator = task.createdBy === userId;
     const isAssigned = task.assignedTo === userId;
 
     if (action === 'delete' && !isCreator) {
-      throw new ForbiddenException('Only the task creator can delete this task');
+      throw new ForbiddenException(
+        'Only the task creator can delete this task',
+      );
     }
 
     if (action === 'update' && !isCreator && !isAssigned) {
-      throw new ForbiddenException('You do not have permission to update this task');
+      throw new ForbiddenException(
+        'You do not have permission to update this task',
+      );
     }
   }
 
