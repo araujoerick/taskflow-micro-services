@@ -5,6 +5,11 @@ import { queryKeys } from '@/utils/query-keys';
 import { toast } from 'sonner';
 import type { Notification } from '@repo/types';
 
+interface TaskChangedEvent {
+  taskId: string;
+  type: string;
+}
+
 export function useWebSocket(accessToken: string | null) {
   const socketRef = useRef<Socket | null>(null);
   const queryClient = useQueryClient();
@@ -23,6 +28,22 @@ export function useWebSocket(accessToken: string | null) {
       toast.info(notification.message, {
         duration: 5000,
       });
+    },
+    [queryClient],
+  );
+
+  // Handler for task_changed broadcast event (invalidates cache for all users)
+  const handleTaskChanged = useCallback(
+    (event: TaskChangedEvent) => {
+      // Invalidate task lists for all users when any task changes
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.lists() });
+
+      // Also invalidate specific task details if we have the taskId
+      if (event.taskId) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(event.taskId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.tasks.comments(event.taskId) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.tasks.history(event.taskId) });
+      }
     },
     [queryClient],
   );
@@ -57,6 +78,9 @@ export function useWebSocket(accessToken: string | null) {
 
     socket.on('notification', handleNotification);
 
+    // Listen for task_changed broadcast (cache invalidation for all users)
+    socket.on('task_changed', handleTaskChanged);
+
     socket.on('error', (error: { message: string }) => {
       console.error('WebSocket error:', error.message);
     });
@@ -81,7 +105,7 @@ export function useWebSocket(accessToken: string | null) {
       socket.disconnect();
       socketRef.current = null;
     };
-  }, [accessToken, handleNotification]);
+  }, [accessToken, handleNotification, handleTaskChanged]);
 
   return socketRef.current;
 }
