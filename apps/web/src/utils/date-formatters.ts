@@ -3,30 +3,31 @@ export function formatRelativeTime(date: string | Date): string {
   const past = new Date(date);
   const diffInSeconds = Math.floor((now.getTime() - past.getTime()) / 1000);
 
+  // Mínimo de 1 minuto - não mostrar segundos
   if (diffInSeconds < 60) {
-    return `${diffInSeconds}s ago`;
+    return 'agora';
   }
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`;
+    return `${diffInMinutes} min atrás`;
   }
 
   const diffInHours = Math.floor(diffInMinutes / 60);
   if (diffInHours < 24) {
-    return `${diffInHours}h ago`;
+    return `${diffInHours}h atrás`;
   }
 
   const diffInDays = Math.floor(diffInHours / 24);
   if (diffInDays < 7) {
-    return `${diffInDays}d ago`;
+    return `${diffInDays} ${diffInDays === 1 ? 'dia' : 'dias'} atrás`;
   }
 
-  return past.toLocaleDateString();
+  return past.toLocaleDateString('pt-BR');
 }
 
 export function formatDate(date: string | Date): string {
-  return new Date(date).toLocaleDateString('en-US', {
+  return new Date(date).toLocaleDateString('pt-BR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',
@@ -34,7 +35,7 @@ export function formatDate(date: string | Date): string {
 }
 
 export function formatDateTime(date: string | Date): string {
-  return new Date(date).toLocaleString('en-US', {
+  return new Date(date).toLocaleString('pt-BR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

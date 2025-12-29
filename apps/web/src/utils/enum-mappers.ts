@@ -1,15 +1,15 @@
 import { TaskStatus, TaskPriority, NotificationType } from '@repo/types';
 
 export const taskStatusLabels: Record<TaskStatus, string> = {
-  [TaskStatus.TODO]: 'Pending',
-  [TaskStatus.IN_PROGRESS]: 'In Progress',
-  [TaskStatus.DONE]: 'Completed',
+  [TaskStatus.TODO]: 'Pendente',
+  [TaskStatus.IN_PROGRESS]: 'Em Progresso',
+  [TaskStatus.DONE]: 'Concluído',
 };
 
 export const taskPriorityLabels: Record<TaskPriority, string> = {
-  [TaskPriority.LOW]: 'Low',
-  [TaskPriority.MEDIUM]: 'Medium',
-  [TaskPriority.HIGH]: 'High',
+  [TaskPriority.LOW]: 'Baixa',
+  [TaskPriority.MEDIUM]: 'Média',
+  [TaskPriority.HIGH]: 'Alta',
 };
 
 // Badge variant mapping for shadcn/ui
@@ -26,8 +26,8 @@ export const taskPriorityVariants = {
 } as const;
 
 export const notificationTypeLabels: Record<NotificationType, string> = {
-  [NotificationType.TASK_CREATED]: 'Task Created',
-  [NotificationType.TASK_UPDATED]: 'Task Updated',
-  [NotificationType.TASK_ASSIGNED]: 'Task Assigned',
-  [NotificationType.TASK_COMMENTED]: 'Comment Added',
+  [NotificationType.TASK_CREATED]: 'Tarefa Criada',
+  [NotificationType.TASK_UPDATED]: 'Tarefa Atualizada',
+  [NotificationType.TASK_ASSIGNED]: 'Tarefa Atribuída',
+  [NotificationType.TASK_COMMENTED]: 'Comentário Adicionado',
 };
