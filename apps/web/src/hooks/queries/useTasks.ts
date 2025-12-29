@@ -80,3 +80,16 @@ export function useTaskHistory(taskId: string) {
     enabled: !!taskId,
   });
 }
+
+export function useUpdateTaskStatus() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ id, status }: { id: string; status: UpdateTaskDto['status'] }) =>
+      tasksService.updateTask(id, { status }),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.lists() });
+      queryClient.invalidateQueries({ queryKey: queryKeys.tasks.detail(id) });
+    },
+  });
+}
