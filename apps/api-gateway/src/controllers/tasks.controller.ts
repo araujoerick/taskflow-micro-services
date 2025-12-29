@@ -85,7 +85,18 @@ export class TasksController {
     @Headers('authorization') authHeader?: string,
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
-    return this.proxyService.proxyRequest(this.tasksServiceUrl, '/tasks', 'POST', body, headers);
+    const mappedBody = {
+      ...body,
+      assignedTo: body.assignedToId,
+    };
+    delete (mappedBody as Record<string, unknown>).assignedToId;
+    return this.proxyService.proxyRequest(
+      this.tasksServiceUrl,
+      '/tasks',
+      'POST',
+      mappedBody,
+      headers,
+    );
   }
 
   @Patch(':id')
@@ -100,11 +111,16 @@ export class TasksController {
     @Headers('authorization') authHeader?: string,
   ): Promise<unknown> {
     const headers = authHeader ? { authorization: authHeader } : undefined;
+    const mappedBody: Record<string, unknown> = { ...body };
+    if ('assignedToId' in body) {
+      mappedBody.assignedTo = body.assignedToId;
+      delete mappedBody.assignedToId;
+    }
     return this.proxyService.proxyRequest(
       this.tasksServiceUrl,
       `/tasks/${id}`,
       'PATCH',
-      body,
+      mappedBody,
       headers,
     );
   }

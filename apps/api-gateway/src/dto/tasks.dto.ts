@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID } from 'class-validator';
+import { IsEnum, IsNotEmpty, IsOptional, IsString, IsUUID, IsDateString } from 'class-validator';
 
 export enum TaskStatus {
   TODO = 'TODO',
@@ -44,7 +44,15 @@ export class CreateTaskDto {
   })
   @IsUUID()
   @IsOptional()
-  assignedTo?: string;
+  assignedToId?: string;
+
+  @ApiPropertyOptional({
+    example: '2024-12-31',
+    description: 'Task due date in ISO format',
+  })
+  @IsDateString()
+  @IsOptional()
+  dueDate?: string;
 }
 
 export class UpdateTaskDto {
@@ -74,7 +82,15 @@ export class UpdateTaskDto {
   })
   @IsUUID()
   @IsOptional()
-  assignedTo?: string;
+  assignedToId?: string;
+
+  @ApiPropertyOptional({
+    example: '2024-12-31',
+    description: 'Task due date in ISO format',
+  })
+  @IsDateString()
+  @IsOptional()
+  dueDate?: string;
 }
 
 export class CreateCommentDto {
