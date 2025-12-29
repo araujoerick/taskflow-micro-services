@@ -43,10 +43,8 @@ export interface Task {
   description: string;
   status: TaskStatus;
   priority: TaskPriority;
-  assignedToId?: string;
-  assignedTo?: User;
-  createdById: string;
-  createdBy?: User;
+  assignedTo?: string;
+  createdBy: string;
   dueDate?: Date;
   createdAt: Date;
   updatedAt: Date;
@@ -58,7 +56,7 @@ export interface CreateTaskDto {
   status?: TaskStatus;
   priority?: TaskPriority;
   assignedToId?: string;
-  dueDate?: Date;
+  dueDate?: string;
 }
 
 export interface UpdateTaskDto {
@@ -67,7 +65,7 @@ export interface UpdateTaskDto {
   status?: TaskStatus;
   priority?: TaskPriority;
   assignedToId?: string;
-  dueDate?: Date;
+  dueDate?: string;
 }
 
 export interface TaskFilters {
