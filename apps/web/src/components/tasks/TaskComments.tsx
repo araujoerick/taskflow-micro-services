@@ -21,6 +21,14 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
   const { data: comments, isLoading } = useTaskComments(taskId);
   const addComment = useAddComment();
 
+  // Sort comments - most recent first
+  const sortedComments = useMemo(() => {
+    if (!comments) return [];
+    return [...comments].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [comments]);
+
   // Get unique user IDs from comments
   const userIds = useMemo(() => {
     if (!comments) return [];
@@ -72,9 +80,9 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
     try {
       await addComment.mutateAsync({ taskId, content: data.content });
       reset();
-      toast.success('Comment added');
+      toast.success('Comentário adicionado');
     } catch {
-      toast.error('Failed to add comment');
+      toast.error('Falha ao adicionar comentário');
     }
   };
 
@@ -83,7 +91,7 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
       <div className="space-y-4">
         <h3 className="font-semibold flex items-center gap-2">
           <MessageSquare className="h-4 w-4" />
-          Comments
+          Comentários
         </h3>
         {[1, 2].map((i) => (
           <Card key={i} className="p-4">
@@ -104,13 +112,13 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
     <div className="space-y-4">
       <h3 className="font-semibold flex items-center gap-2">
         <MessageSquare className="h-4 w-4" />
-        Comments ({comments?.length || 0})
+        Comentários ({comments?.length || 0})
       </h3>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex gap-2">
         <div className="flex-1">
           <Textarea
-            placeholder="Add a comment..."
+            placeholder="Adicione um comentário..."
             rows={2}
             {...register('content')}
             aria-invalid={!!errors.content}
@@ -128,9 +136,9 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
         </Button>
       </form>
 
-      {comments && comments.length > 0 ? (
+      {sortedComments.length > 0 ? (
         <div className="space-y-3">
-          {comments.map((comment) => (
+          {sortedComments.map((comment) => (
             <Card key={comment.id} className="p-4">
               <div className="flex items-start gap-3">
                 <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-medium">
@@ -153,7 +161,7 @@ export function TaskComments({ taskId }: TaskCommentsProps) {
         </div>
       ) : (
         <div className="text-center py-8 text-muted-foreground text-sm">
-          No comments yet. Be the first to comment!
+          Nenhum comentário ainda. Seja o primeiro a comentar!
         </div>
       )}
     </div>

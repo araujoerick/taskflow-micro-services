@@ -35,21 +35,21 @@ export function DeleteTaskDialog({
             <div className="p-2 rounded-full bg-destructive/10">
               <AlertTriangle className="h-5 w-5 text-destructive" />
             </div>
-            <DialogTitle>Delete Task</DialogTitle>
+            <DialogTitle>Excluir Tarefa</DialogTitle>
           </div>
           <DialogDescription className="pt-2">
-            Are you sure you want to delete <strong>"{task.title}"</strong>? This action
-            cannot be undone.
+            Tem certeza que deseja excluir <strong>"{task.title}"</strong>? Esta ação
+            não pode ser desfeita.
           </DialogDescription>
         </DialogHeader>
 
         <DialogFooter className="gap-2 sm:gap-0">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            Cancelar
           </Button>
           <Button variant="destructive" onClick={onConfirm} disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Delete
+            Excluir
           </Button>
         </DialogFooter>
       </DialogContent>
