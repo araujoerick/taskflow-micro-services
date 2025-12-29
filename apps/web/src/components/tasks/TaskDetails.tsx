@@ -12,15 +12,20 @@ import {
   taskPriorityVariants,
 } from '@/utils/enum-mappers';
 import { formatDate, formatDateTime } from '@/utils/date-formatters';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface TaskDetailsProps {
   task: Task | undefined;
   isLoading: boolean;
   onEdit: () => void;
   onDelete: () => void;
+  assigneeName?: string;
 }
 
-export function TaskDetails({ task, isLoading, onEdit, onDelete }: TaskDetailsProps) {
+export function TaskDetails({ task, isLoading, onEdit, onDelete, assigneeName }: TaskDetailsProps) {
+  const { user } = useAuth();
+  const isCreator = user?.id === task?.createdBy;
+
   if (isLoading) {
     return (
       <Card>
@@ -52,11 +57,11 @@ export function TaskDetails({ task, isLoading, onEdit, onDelete }: TaskDetailsPr
     return (
       <Card>
         <CardContent className="py-16 text-center">
-          <p className="text-muted-foreground">Task not found</p>
+          <p className="text-muted-foreground">Tarefa não encontrada</p>
           <Link to="/tasks">
             <Button variant="link" className="mt-2">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to tasks
+              Voltar para tarefas
             </Button>
           </Link>
         </CardContent>
@@ -78,16 +83,18 @@ export function TaskDetails({ task, isLoading, onEdit, onDelete }: TaskDetailsPr
             </Link>
             <CardTitle className="text-xl">{task.title}</CardTitle>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
-              Edit
-            </Button>
-            <Button variant="destructive" onClick={onDelete}>
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </Button>
-          </div>
+          {isCreator && (
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={onEdit}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
+              </Button>
+              <Button variant="destructive" onClick={onDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Excluir
+              </Button>
+            </div>
+          )}
         </div>
       </CardHeader>
 
@@ -115,7 +122,7 @@ export function TaskDetails({ task, isLoading, onEdit, onDelete }: TaskDetailsPr
 
         {task.description && (
           <div>
-            <h4 className="text-sm font-medium mb-2">Description</h4>
+            <h4 className="text-sm font-medium mb-2">Descrição</h4>
             <p className="text-muted-foreground whitespace-pre-wrap">{task.description}</p>
           </div>
         )}
@@ -127,21 +134,21 @@ export function TaskDetails({ task, isLoading, onEdit, onDelete }: TaskDetailsPr
                 className={`h-4 w-4 ${isOverdue ? 'text-destructive' : 'text-muted-foreground'}`}
               />
               <div>
-                <p className="text-muted-foreground text-xs">Due Date</p>
+                <p className="text-muted-foreground text-xs">Data de Vencimento</p>
                 <p className={isOverdue ? 'text-destructive font-medium' : ''}>
                   {formatDate(task.dueDate)}
-                  {isOverdue && ' (Overdue)'}
+                  {isOverdue && ' (Atrasada)'}
                 </p>
               </div>
             </div>
           )}
 
-          {task.assignedTo && (
+          {assigneeName && (
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4 text-muted-foreground" />
               <div>
-                <p className="text-muted-foreground text-xs">Assigned To</p>
-                <p>User</p>
+                <p className="text-muted-foreground text-xs">Atribuído Para</p>
+                <p>{assigneeName}</p>
               </div>
             </div>
           )}
@@ -149,7 +156,7 @@ export function TaskDetails({ task, isLoading, onEdit, onDelete }: TaskDetailsPr
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-muted-foreground text-xs">Created</p>
+              <p className="text-muted-foreground text-xs">Criado em</p>
               <p>{formatDateTime(task.createdAt)}</p>
             </div>
           </div>
@@ -157,7 +164,7 @@ export function TaskDetails({ task, isLoading, onEdit, onDelete }: TaskDetailsPr
           <div className="flex items-center gap-2 text-sm">
             <Clock className="h-4 w-4 text-muted-foreground" />
             <div>
-              <p className="text-muted-foreground text-xs">Updated</p>
+              <p className="text-muted-foreground text-xs">Atualizado em</p>
               <p>{formatDateTime(task.updatedAt)}</p>
             </div>
           </div>
