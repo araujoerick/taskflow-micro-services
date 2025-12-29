@@ -16,9 +16,9 @@ const COLORS = {
 };
 
 const LABELS = {
-  [TaskStatus.TODO]: 'Pending',
-  [TaskStatus.IN_PROGRESS]: 'In Progress',
-  [TaskStatus.DONE]: 'Completed',
+  [TaskStatus.TODO]: 'Pendente',
+  [TaskStatus.IN_PROGRESS]: 'Em Progresso',
+  [TaskStatus.DONE]: 'Concluído',
 };
 
 export function StatusChart({ tasks, isLoading }: StatusChartProps) {
@@ -44,7 +44,7 @@ export function StatusChart({ tasks, isLoading }: StatusChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Tasks by Status</CardTitle>
+          <CardTitle>Tarefas por Status</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-64 w-full" />
@@ -57,10 +57,10 @@ export function StatusChart({ tasks, isLoading }: StatusChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Tasks by Status</CardTitle>
+          <CardTitle>Tarefas por Status</CardTitle>
         </CardHeader>
         <CardContent className="h-64 flex items-center justify-center">
-          <p className="text-muted-foreground">No tasks to display</p>
+          <p className="text-muted-foreground">Nenhuma tarefa para exibir</p>
         </CardContent>
       </Card>
     );
@@ -69,7 +69,7 @@ export function StatusChart({ tasks, isLoading }: StatusChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tasks by Status</CardTitle>
+        <CardTitle>Tarefas por Status</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-64">
