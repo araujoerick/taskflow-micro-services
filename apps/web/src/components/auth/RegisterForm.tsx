@@ -42,32 +42,32 @@ export function RegisterForm() {
         email: data.email,
         password: data.password,
       });
-      toast.success('Account created successfully!', {
-        description: 'Please sign in with your credentials.',
+      toast.success('Conta criada com sucesso!', {
+        description: 'Por favor, faça login com suas credenciais.',
       });
       navigate({ to: '/login' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Registration failed';
-      toast.error('Registration failed', { description: message });
+      const message = error instanceof Error ? error.message : 'Falha no cadastro';
+      toast.error('Falha no cadastro', { description: message });
     }
   };
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">Criar uma conta</CardTitle>
         <CardDescription className="text-center">
-          Enter your information to get started
+          Digite suas informações para começar
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full Name</Label>
+            <Label htmlFor="name">Nome Completo</Label>
             <Input
               id="name"
               type="text"
-              placeholder="John Doe"
+              placeholder="João Silva"
               autoComplete="name"
               {...register('name')}
               aria-invalid={!!errors.name}
@@ -80,7 +80,7 @@ export function RegisterForm() {
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="nome@exemplo.com"
               autoComplete="email"
               {...register('email')}
               aria-invalid={!!errors.email}
@@ -89,11 +89,11 @@ export function RegisterForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Senha</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Create a strong password"
+              placeholder="Crie uma senha forte"
               autoComplete="new-password"
               {...register('password')}
               aria-invalid={!!errors.password}
@@ -102,17 +102,17 @@ export function RegisterForm() {
               <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
             <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters with uppercase, lowercase, number, and special
-              character.
+              Deve ter pelo menos 8 caracteres com maiúsculas, minúsculas, número e caractere
+              especial.
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
+            <Label htmlFor="confirmPassword">Confirmar Senha</Label>
             <Input
               id="confirmPassword"
               type="password"
-              placeholder="Confirm your password"
+              placeholder="Confirme sua senha"
               autoComplete="new-password"
               {...register('confirmPassword')}
               aria-invalid={!!errors.confirmPassword}
@@ -124,15 +124,15 @@ export function RegisterForm() {
 
           <Button type="submit" className="w-full" disabled={registerMutation.isPending}>
             {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create account
+            Criar conta
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Already have an account?{' '}
+          Já tem uma conta?{' '}
           <Link to="/login" className="text-primary hover:underline font-medium">
-            Sign in
+            Entrar
           </Link>
         </p>
       </CardFooter>

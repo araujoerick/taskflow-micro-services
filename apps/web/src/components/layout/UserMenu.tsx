@@ -53,7 +53,7 @@ export function UserMenu() {
         <div className="absolute right-0 mt-2 w-56 z-50">
           <Card className="shadow-lg p-2">
             <div className="px-3 py-2 border-b mb-2">
-              <p className="font-medium text-sm truncate">{user.name || 'User'}</p>
+              <p className="font-medium text-sm truncate">{user.name || 'Usuário'}</p>
               <p className="text-xs text-muted-foreground truncate">{user.email || ''}</p>
             </div>
 
@@ -63,7 +63,7 @@ export function UserMenu() {
               onClick={() => setIsOpen(false)}
             >
               <UserIcon className="h-4 w-4" />
-              Profile
+              Perfil
             </Button>
 
             <Button
@@ -73,7 +73,7 @@ export function UserMenu() {
               disabled={logout.isPending}
             >
               <LogOut className="h-4 w-4" />
-              {logout.isPending ? 'Logging out...' : 'Logout'}
+              {logout.isPending ? 'Saindo...' : 'Sair'}
             </Button>
           </Card>
         </div>

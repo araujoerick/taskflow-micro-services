@@ -1,17 +1,25 @@
-import { Link, useLocation } from '@tanstack/react-router';
-import { LayoutDashboard, ListTodo } from 'lucide-react';
+import { Link, useLocation, useNavigate } from '@tanstack/react-router';
+import { LayoutDashboard, ListTodo, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
+import { useLogout } from '@/hooks/queries/useAuth';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: LayoutDashboard },
-  { to: '/tasks', label: 'Tasks', icon: ListTodo },
+  { to: '/', label: 'Início', icon: LayoutDashboard },
+  { to: '/tasks', label: 'Tarefas', icon: ListTodo },
 ] as const;
 
 export function Header() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const logout = useLogout();
+
+  const handleMobileLogout = async () => {
+    await logout.mutateAsync();
+    navigate({ to: '/login' });
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -77,6 +85,14 @@ export function Header() {
             </Link>
           );
         })}
+        <button
+          onClick={handleMobileLogout}
+          disabled={logout.isPending}
+          className="flex flex-col items-center gap-1 px-4 py-2 rounded-md transition-colors text-muted-foreground hover:text-foreground"
+        >
+          <LogOut className="h-5 w-5" />
+          <span className="text-xs font-medium">Sair</span>
+        </button>
       </nav>
     </header>
   );

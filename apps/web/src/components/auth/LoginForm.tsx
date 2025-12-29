@@ -36,20 +36,20 @@ export function LoginForm() {
   const onSubmit = async (data: LoginInput) => {
     try {
       await login.mutateAsync(data);
-      toast.success('Welcome back!');
+      toast.success('Bem-vindo de volta!');
       navigate({ to: '/' });
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Invalid credentials';
-      toast.error('Login failed', { description: message });
+      const message = error instanceof Error ? error.message : 'Credenciais inválidas';
+      toast.error('Falha no login', { description: message });
     }
   };
 
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold text-center">Welcome back</CardTitle>
+        <CardTitle className="text-2xl font-bold text-center">Bem-vindo de volta</CardTitle>
         <CardDescription className="text-center">
-          Enter your credentials to access your account
+          Digite suas credenciais para acessar sua conta
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -59,7 +59,7 @@ export function LoginForm() {
             <Input
               id="email"
               type="email"
-              placeholder="name@example.com"
+              placeholder="nome@exemplo.com"
               autoComplete="email"
               {...register('email')}
               aria-invalid={!!errors.email}
@@ -68,11 +68,11 @@ export function LoginForm() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">Senha</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="Digite sua senha"
               autoComplete="current-password"
               {...register('password')}
               aria-invalid={!!errors.password}
@@ -84,15 +84,15 @@ export function LoginForm() {
 
           <Button type="submit" className="w-full" disabled={login.isPending}>
             {login.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Sign in
+            Entrar
           </Button>
         </form>
       </CardContent>
       <CardFooter className="flex justify-center">
         <p className="text-sm text-muted-foreground">
-          Don't have an account?{' '}
+          Não tem uma conta?{' '}
           <Link to="/register" className="text-primary hover:underline font-medium">
-            Sign up
+            Cadastre-se
           </Link>
         </p>
       </CardFooter>
