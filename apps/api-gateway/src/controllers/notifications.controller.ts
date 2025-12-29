@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Param, Query, Headers, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Delete,
+  Body,
+  Param,
+  Query,
+  Headers,
+  UseGuards,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { ProxyService } from '../proxy/proxy.service';
@@ -105,6 +115,25 @@ export class NotificationsController {
       this.notificationsServiceUrl,
       '/notifications/mark-all-as-read',
       'POST',
+      undefined,
+      headers,
+    );
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a notification' })
+  @ApiResponse({ status: 200, description: 'Notification deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Notification not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async delete(
+    @Param('id') id: string,
+    @Headers('authorization') authHeader?: string,
+  ): Promise<unknown> {
+    const headers = authHeader ? { authorization: authHeader } : undefined;
+    return this.proxyService.proxyRequest(
+      this.notificationsServiceUrl,
+      `/notifications/${id}`,
+      'DELETE',
       undefined,
       headers,
     );

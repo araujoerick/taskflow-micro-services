@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Post,
+  Delete,
   Param,
   Query,
   Body,
@@ -51,5 +52,13 @@ export class NotificationsController {
   @Post('mark-all-as-read')
   async markAllAsRead(@CurrentUser() user: { userId: string }) {
     return this.notificationsService.markAllAsRead(user.userId);
+  }
+
+  @Delete(':id')
+  async delete(
+    @Param('id', ParseUUIDPipe) id: string,
+    @CurrentUser() user: { userId: string },
+  ) {
+    return this.notificationsService.delete(id, user.userId);
   }
 }
