@@ -19,28 +19,28 @@ export function StatsCards({ tasks, isLoading }: StatsCardsProps) {
 
   const cards = [
     {
-      title: 'Total Tasks',
+      title: 'Total de Tarefas',
       value: stats.total,
       icon: ListTodo,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
     },
     {
-      title: 'Pending',
+      title: 'Pendentes',
       value: stats.todo,
       icon: AlertCircle,
       color: 'text-yellow-500',
       bgColor: 'bg-yellow-500/10',
     },
     {
-      title: 'In Progress',
+      title: 'Em Progresso',
       value: stats.inProgress,
       icon: Clock,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
     },
     {
-      title: 'Completed',
+      title: 'Concluídas',
       value: stats.done,
       icon: CheckCircle2,
       color: 'text-green-500',

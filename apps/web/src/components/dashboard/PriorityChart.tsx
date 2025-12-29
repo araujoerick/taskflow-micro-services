@@ -25,9 +25,9 @@ const COLORS = {
 };
 
 const LABELS = {
-  [TaskPriority.LOW]: 'Low',
-  [TaskPriority.MEDIUM]: 'Medium',
-  [TaskPriority.HIGH]: 'High',
+  [TaskPriority.LOW]: 'Baixa',
+  [TaskPriority.MEDIUM]: 'Média',
+  [TaskPriority.HIGH]: 'Alta',
 };
 
 export function PriorityChart({ tasks, isLoading }: PriorityChartProps) {
@@ -53,7 +53,7 @@ export function PriorityChart({ tasks, isLoading }: PriorityChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Tasks by Priority</CardTitle>
+          <CardTitle>Tarefas por Prioridade</CardTitle>
         </CardHeader>
         <CardContent>
           <Skeleton className="h-64 w-full" />
@@ -66,10 +66,10 @@ export function PriorityChart({ tasks, isLoading }: PriorityChartProps) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Tasks by Priority</CardTitle>
+          <CardTitle>Tarefas por Prioridade</CardTitle>
         </CardHeader>
         <CardContent className="h-64 flex items-center justify-center">
-          <p className="text-muted-foreground">No tasks to display</p>
+          <p className="text-muted-foreground">Nenhuma tarefa para exibir</p>
         </CardContent>
       </Card>
     );
@@ -78,7 +78,7 @@ export function PriorityChart({ tasks, isLoading }: PriorityChartProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Tasks by Priority</CardTitle>
+        <CardTitle>Tarefas por Prioridade</CardTitle>
       </CardHeader>
       <CardContent>
         <div className="h-64">
