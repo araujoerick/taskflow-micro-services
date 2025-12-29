@@ -55,7 +55,7 @@ export function TaskFilters({ filters, onFiltersChange }: TaskFiltersProps) {
       <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search tasks..."
+          placeholder="Buscar tarefas..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
           className="pl-9"
@@ -67,7 +67,7 @@ export function TaskFilters({ filters, onFiltersChange }: TaskFiltersProps) {
           <SelectValue placeholder="Status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Status</SelectItem>
+          <SelectItem value="all">Todos os Status</SelectItem>
           {Object.values(TaskStatus).map((status) => (
             <SelectItem key={status} value={status}>
               {taskStatusLabels[status]}
@@ -78,10 +78,10 @@ export function TaskFilters({ filters, onFiltersChange }: TaskFiltersProps) {
 
       <Select value={filters.priority} onValueChange={handlePriorityChange}>
         <SelectTrigger className="w-full sm:w-40">
-          <SelectValue placeholder="Priority" />
+          <SelectValue placeholder="Prioridade" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Priority</SelectItem>
+          <SelectItem value="all">Todas Prioridades</SelectItem>
           {Object.values(TaskPriority).map((priority) => (
             <SelectItem key={priority} value={priority}>
               {taskPriorityLabels[priority]}
@@ -91,7 +91,7 @@ export function TaskFilters({ filters, onFiltersChange }: TaskFiltersProps) {
       </Select>
 
       {hasActiveFilters && (
-        <Button variant="ghost" size="icon" onClick={clearFilters} aria-label="Clear filters">
+        <Button variant="ghost" size="icon" onClick={clearFilters} aria-label="Limpar filtros">
           <X className="h-4 w-4" />
         </Button>
       )}
