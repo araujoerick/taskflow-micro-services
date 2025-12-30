@@ -1,9 +1,6 @@
 import { Link } from '@tanstack/react-router';
 import { MoreHorizontal, Pencil, Trash2, Calendar, User, UserCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -12,13 +9,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import type { Task } from '@repo/types';
-import { TaskStatus } from '@repo/types';
-import {
-  taskStatusLabels,
-  taskPriorityLabels,
-  taskStatusVariants,
-  taskPriorityVariants,
-} from '@/utils/enum-mappers';
+import { TaskStatus, TaskPriority } from '@repo/types';
+import { taskStatusLabels, taskPriorityLabels } from '@/utils/enum-mappers';
 import { formatDate } from '@/utils/date-formatters';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -31,7 +23,40 @@ interface TaskCardProps {
   assigneeName?: string;
 }
 
-export function TaskCard({ task, onEdit, onDelete, onStatusChange, creatorName, assigneeName }: TaskCardProps) {
+function getStatusBadgeClass(status: TaskStatus): string {
+  switch (status) {
+    case TaskStatus.TODO:
+      return 'organic-badge status-pending';
+    case TaskStatus.IN_PROGRESS:
+      return 'organic-badge status-progress';
+    case TaskStatus.DONE:
+      return 'organic-badge status-done';
+    default:
+      return 'organic-badge';
+  }
+}
+
+function getPriorityBadgeClass(priority: TaskPriority): string {
+  switch (priority) {
+    case TaskPriority.LOW:
+      return 'organic-badge priority-low';
+    case TaskPriority.MEDIUM:
+      return 'organic-badge priority-medium';
+    case TaskPriority.HIGH:
+      return 'organic-badge priority-high';
+    default:
+      return 'organic-badge';
+  }
+}
+
+export function TaskCard({
+  task,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  creatorName,
+  assigneeName,
+}: TaskCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { user } = useAuth();
 
@@ -41,123 +66,115 @@ export function TaskCard({ task, onEdit, onDelete, onStatusChange, creatorName, 
   const canChangeStatus = isCreator || isAssignee;
 
   return (
-    <Card className="group hover:shadow-md transition-shadow">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-2">
-          <Link to="/tasks/$taskId" params={{ taskId: task.id }} className="flex-1 min-w-0">
-            <h3 className="font-semibold text-base truncate hover:text-primary transition-colors">
-              {task.title}
-            </h3>
-          </Link>
+    <div className="organic-task-card group">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-2 mb-3">
+        <Link to="/tasks/$taskId" params={{ taskId: task.id }} className="flex-1 min-w-0">
+          <h3 className="font-semibold text-base truncate hover:text-purple-600 transition-colors">
+            {task.title}
+          </h3>
+        </Link>
 
-          {isCreator && (
-            <div className="relative">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 opacity-0 group-hover:opacity-100 transition-opacity"
-                onClick={() => setMenuOpen(!menuOpen)}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-
-              {menuOpen && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                  <div className="absolute right-0 top-full mt-1 z-50 bg-popover border rounded-md shadow-lg py-1 min-w-32">
-                    <button
-                      className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2"
-                      onClick={() => {
-                        onEdit(task);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      <Pencil className="h-4 w-4" />
-                      Editar
-                    </button>
-                    <button
-                      className="w-full px-3 py-2 text-sm text-left hover:bg-accent flex items-center gap-2 text-destructive"
-                      onClick={() => {
-                        onDelete(task);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Excluir
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-2 mt-2">
-          {canChangeStatus && onStatusChange ? (
-            <Select
-              value={task.status}
-              onValueChange={(value) => onStatusChange(task, value as TaskStatus)}
+        {isCreator && (
+          <div className="relative">
+            <button
+              className="w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100"
+              onClick={() => setMenuOpen(!menuOpen)}
             >
-              <SelectTrigger className="h-6 w-auto text-xs px-2">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Object.values(TaskStatus).map((s) => (
-                  <SelectItem key={s} value={s}>
-                    {taskStatusLabels[s]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Badge
-              variant={
-                taskStatusVariants[task.status] as 'default' | 'secondary' | 'destructive' | 'outline'
-              }
-            >
-              {taskStatusLabels[task.status]}
-            </Badge>
-          )}
-          <Badge
-            variant={
-              taskPriorityVariants[task.priority] as
-                | 'default'
-                | 'secondary'
-                | 'destructive'
-                | 'outline'
-            }
-          >
-            {taskPriorityLabels[task.priority]}
-          </Badge>
-        </div>
-      </CardHeader>
+              <MoreHorizontal className="h-4 w-4 text-gray-500" />
+            </button>
 
-      <CardContent className="pt-0">
-        {task.description && (
-          <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{task.description}</p>
+            {menuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
+                <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-card border rounded-xl shadow-lg py-1 min-w-32 overflow-hidden">
+                  <button
+                    className="w-full px-3 py-2 text-sm text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2 transition-colors"
+                    onClick={() => {
+                      onEdit(task);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <Pencil className="h-4 w-4 text-purple-500" />
+                    Editar
+                  </button>
+                  <button
+                    className="w-full px-3 py-2 text-sm text-left hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2 text-red-600 transition-colors"
+                    onClick={() => {
+                      onDelete(task);
+                      setMenuOpen(false);
+                    }}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Excluir
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         )}
+      </div>
 
-        <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-          {creatorName && (
-            <div className="flex items-center gap-1">
-              <UserCircle className="h-3 w-3" />
-              <span>Criado por {creatorName}</span>
+      {/* Badges */}
+      <div className="flex flex-wrap gap-2 mb-3">
+        {canChangeStatus && onStatusChange ? (
+          <Select
+            value={task.status}
+            onValueChange={(value) => onStatusChange(task, value as TaskStatus)}
+          >
+            <SelectTrigger className="h-7 w-auto text-xs px-3 rounded-full border-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              {Object.values(TaskStatus).map((s) => (
+                <SelectItem key={s} value={s} className="rounded-lg">
+                  {taskStatusLabels[s]}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <span className={getStatusBadgeClass(task.status)}>{taskStatusLabels[task.status]}</span>
+        )}
+        <span className={getPriorityBadgeClass(task.priority)}>
+          {taskPriorityLabels[task.priority]}
+        </span>
+      </div>
+
+      {/* Description */}
+      {task.description && (
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">{task.description}</p>
+      )}
+
+      {/* Meta Info */}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground pt-3 border-t border-gray-100 dark:border-gray-800">
+        {creatorName && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+              <UserCircle className="h-3 w-3 text-blue-500" />
             </div>
-          )}
-          {task.dueDate && (
-            <div className={`flex items-center gap-1 ${isOverdue ? 'text-destructive' : ''}`}>
-              <Calendar className="h-3 w-3" />
-              <span>{formatDate(task.dueDate)}</span>
+            <span>{creatorName}</span>
+          </div>
+        )}
+        {task.dueDate && (
+          <div className={`flex items-center gap-1.5 ${isOverdue ? 'text-red-500' : ''}`}>
+            <div
+              className={`w-5 h-5 rounded-full flex items-center justify-center ${isOverdue ? 'bg-red-100 dark:bg-red-900/30' : 'bg-gray-100 dark:bg-gray-800'}`}
+            >
+              <Calendar className={`h-3 w-3 ${isOverdue ? 'text-red-500' : 'text-gray-500'}`} />
             </div>
-          )}
-          {assigneeName && (
-            <div className="flex items-center gap-1">
-              <User className="h-3 w-3" />
-              <span>Atribuído a {assigneeName}</span>
+            <span>{formatDate(task.dueDate)}</span>
+          </div>
+        )}
+        {assigneeName && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+              <User className="h-3 w-3 text-green-500" />
             </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
+            <span>{assigneeName}</span>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

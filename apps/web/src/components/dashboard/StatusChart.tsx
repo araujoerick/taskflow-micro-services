@@ -1,5 +1,5 @@
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { PieChart as PieChartIcon } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import type { Task } from '@repo/types';
 import { TaskStatus } from '@repo/types';
@@ -10,9 +10,9 @@ interface StatusChartProps {
 }
 
 const COLORS = {
-  [TaskStatus.TODO]: '#eab308', // yellow-500
-  [TaskStatus.IN_PROGRESS]: '#8b5cf6', // purple-500
-  [TaskStatus.DONE]: '#22c55e', // green-500
+  [TaskStatus.TODO]: '#f59e0b',
+  [TaskStatus.IN_PROGRESS]: '#8b5cf6',
+  [TaskStatus.DONE]: '#22c55e',
 };
 
 const LABELS = {
@@ -42,67 +42,63 @@ export function StatusChart({ tasks, isLoading }: StatusChartProps) {
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Tarefas por Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Skeleton className="h-64 w-full" />
-        </CardContent>
-      </Card>
+      <div className="organic-chart-container">
+        <div className="organic-chart-title">
+          <PieChartIcon className="h-5 w-5 text-purple-500" />
+          Tarefas por Status
+        </div>
+        <Skeleton className="h-64 w-full rounded-2xl" />
+      </div>
     );
   }
 
   if (tasks.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Tarefas por Status</CardTitle>
-        </CardHeader>
-        <CardContent className="h-64 flex items-center justify-center">
+      <div className="organic-chart-container">
+        <div className="organic-chart-title">
+          <PieChartIcon className="h-5 w-5 text-purple-500" />
+          Tarefas por Status
+        </div>
+        <div className="h-64 flex items-center justify-center">
           <p className="text-muted-foreground">Nenhuma tarefa para exibir</p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Tarefas por Status</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={data}
-                cx="50%"
-                cy="50%"
-                innerRadius={60}
-                outerRadius={80}
-                paddingAngle={5}
-                dataKey="value"
-                label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
-                labelLine={false}
-                legendType="none"
-              >
-                {data.map((entry) => (
-                  <Cell key={entry.name} fill={COLORS[entry.status]} />
-                ))}
-              </Pie>
-              {/* <Tooltip
-                contentStyle={{
-                  backgroundColor: 'hsl(var(--popover))',
-                  border: '1px solid hsl(var(--border))',
-                  borderRadius: '8px',
-                }}
-              /> */}
-              <Legend />
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="organic-chart-container">
+      <div className="organic-chart-title">
+        <PieChartIcon className="h-5 w-5 text-purple-500" />
+        Tarefas por Status
+      </div>
+      <div className="h-64">
+        <ResponsiveContainer width="100%" height="100%">
+          <PieChart>
+            <Pie
+              data={data}
+              cx="50%"
+              cy="50%"
+              innerRadius={55}
+              outerRadius={80}
+              paddingAngle={5}
+              dataKey="value"
+              label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
+              labelLine={false}
+              legendType="none"
+            >
+              {data.map((entry) => (
+                <Cell key={entry.name} fill={COLORS[entry.status]} />
+              ))}
+            </Pie>
+            <Legend
+              wrapperStyle={{
+                paddingTop: '16px',
+              }}
+            />
+          </PieChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
   );
 }
