@@ -1,8 +1,6 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import { TaskCard } from './TaskCard';
 import { ListTodo, ChevronLeft, ChevronRight } from 'lucide-react';
 import type { Task, PaginatedResponse, TaskStatus } from '@repo/types';
@@ -18,7 +16,15 @@ interface TaskListProps {
   onStatusChange?: (task: Task, status: TaskStatus) => void;
 }
 
-export function TaskList({ data, isLoading, page, onPageChange, onEdit, onDelete, onStatusChange }: TaskListProps) {
+export function TaskList({
+  data,
+  isLoading,
+  page,
+  onPageChange,
+  onEdit,
+  onDelete,
+  onStatusChange,
+}: TaskListProps) {
   const tasks = data?.data || [];
   const totalPages = data?.meta?.totalPages || 1;
 
@@ -54,17 +60,17 @@ export function TaskList({ data, isLoading, page, onPageChange, onEdit, onDelete
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Card key={i} className="p-4">
-            <Skeleton className="h-5 w-3/4 mb-3" />
+          <div key={i} className="organic-task-card">
+            <Skeleton className="h-5 w-3/4 mb-3 rounded-full" />
             <div className="flex gap-2 mb-3">
-              <Skeleton className="h-5 w-20" />
-              <Skeleton className="h-5 w-16" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-16 rounded-full" />
             </div>
-            <Skeleton className="h-4 w-full mb-2" />
-            <Skeleton className="h-4 w-2/3" />
-          </Card>
+            <Skeleton className="h-4 w-full mb-2 rounded-full" />
+            <Skeleton className="h-4 w-2/3 rounded-full" />
+          </div>
         ))}
       </div>
     );
@@ -72,11 +78,11 @@ export function TaskList({ data, isLoading, page, onPageChange, onEdit, onDelete
 
   if (tasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="rounded-full bg-muted p-4 mb-4">
-          <ListTodo className="h-8 w-8 text-muted-foreground" />
+      <div className="organic-chart-container flex flex-col items-center justify-center py-16 text-center">
+        <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+          <ListTodo className="h-10 w-10 text-purple-400" />
         </div>
-        <h3 className="text-lg font-medium mb-1">Nenhuma tarefa encontrada</h3>
+        <h3 className="text-lg font-semibold mb-1">Nenhuma tarefa encontrada</h3>
         <p className="text-muted-foreground text-sm">Crie sua primeira tarefa para começar</p>
       </div>
     );
@@ -84,7 +90,7 @@ export function TaskList({ data, isLoading, page, onPageChange, onEdit, onDelete
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {tasks.map((task) => (
           <TaskCard
             key={task.id}
@@ -99,28 +105,26 @@ export function TaskList({ data, isLoading, page, onPageChange, onEdit, onDelete
       </div>
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-center gap-2">
-          <Button
-            variant="outline"
-            size="icon"
+        <div className="organic-pagination">
+          <button
+            className="organic-pagination-button"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
           >
             <ChevronLeft className="h-4 w-4" />
-          </Button>
+          </button>
 
-          <span className="text-sm text-muted-foreground px-4">
+          <span className="organic-pagination-info">
             Página {page} de {totalPages}
           </span>
 
-          <Button
-            variant="outline"
-            size="icon"
+          <button
+            className="organic-pagination-button"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
           >
             <ChevronRight className="h-4 w-4" />
-          </Button>
+          </button>
         </div>
       )}
     </div>
