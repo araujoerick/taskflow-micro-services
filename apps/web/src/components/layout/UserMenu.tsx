@@ -4,14 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useAuth } from '@/contexts/AuthContext';
 import { useLogout } from '@/hooks/queries/useAuth';
-import { useNavigate } from '@tanstack/react-router';
 
 export function UserMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const logout = useLogout();
-  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -24,9 +22,8 @@ export function UserMenu() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleLogout = async () => {
-    await logout.mutateAsync();
-    navigate({ to: '/login' });
+  const handleLogout = () => {
+    logout.mutate();
   };
 
   if (!user) return null;
