@@ -31,6 +31,14 @@ function formatDate(date: Date): string {
   });
 }
 
+const levelStyles = {
+  0: 'bg-secondary dark:bg-muted',
+  1: 'bg-[#c6e48b] dark:bg-purple-500/25',
+  2: 'bg-[#7bc96f] dark:bg-purple-500/50',
+  3: 'bg-[#239a3b] dark:bg-purple-500/75',
+  4: 'bg-[#196127] dark:bg-purple-500',
+} as const;
+
 export function ActivityHeatmap({ tasks }: ActivityHeatmapProps) {
   const { activityData, totalCompleted } = useMemo(() => {
     const completedByDate = new Map<string, number>();
@@ -84,25 +92,25 @@ export function ActivityHeatmap({ tasks }: ActivityHeatmapProps) {
   }, [tasks]);
 
   return (
-    <div className="activity-heatmap">
-      <div className="activity-heatmap-header">
-        <div className="activity-heatmap-title">
+    <div className="bg-white dark:bg-card rounded-[1.25rem] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border">
+      <div className="flex items-center justify-between mb-3">
+        <div className="font-semibold text-sm flex items-center gap-2">
           <Flame className="h-4 w-4 text-orange-500" />
           Atividade
         </div>
-        <div className="activity-heatmap-count">
+        <div className="text-xs text-muted-foreground">
           {totalCompleted} tarefa{totalCompleted !== 1 ? 's' : ''} concluída
           {totalCompleted !== 1 ? 's' : ''}
         </div>
       </div>
 
-      <div className="activity-heatmap-grid">
+      <div className="flex gap-[3px] overflow-x-auto pb-2">
         {activityData.map((week, weekIndex) => (
-          <div key={weekIndex} className="activity-heatmap-week">
+          <div key={weekIndex} className="flex flex-col gap-[3px]">
             {week.map((day, dayIndex) => (
               <div
                 key={dayIndex}
-                className={`activity-heatmap-day ${day.level > 0 ? `level-${day.level}` : ''}`}
+                className={`w-3 h-3 rounded-[3px] transition-all duration-150 hover:scale-125 ${levelStyles[day.level as keyof typeof levelStyles]}`}
                 title={`${formatDate(day.date)}: ${day.count} tarefa${day.count !== 1 ? 's' : ''}`}
               />
             ))}
@@ -110,14 +118,14 @@ export function ActivityHeatmap({ tasks }: ActivityHeatmapProps) {
         ))}
       </div>
 
-      <div className="activity-heatmap-legend">
-        <span>Menos</span>
-        <div className="activity-heatmap-day" />
-        <div className="activity-heatmap-day level-1" />
-        <div className="activity-heatmap-day level-2" />
-        <div className="activity-heatmap-day level-3" />
-        <div className="activity-heatmap-day level-4" />
-        <span>Mais</span>
+      <div className="flex items-center justify-end gap-1 mt-2 text-[0.65rem] text-muted-foreground">
+        <span className="mx-1">Menos</span>
+        <div className={`w-3 h-3 rounded-[3px] ${levelStyles[0]}`} />
+        <div className={`w-3 h-3 rounded-[3px] ${levelStyles[1]}`} />
+        <div className={`w-3 h-3 rounded-[3px] ${levelStyles[2]}`} />
+        <div className={`w-3 h-3 rounded-[3px] ${levelStyles[3]}`} />
+        <div className={`w-3 h-3 rounded-[3px] ${levelStyles[4]}`} />
+        <span className="mx-1">Mais</span>
       </div>
     </div>
   );
