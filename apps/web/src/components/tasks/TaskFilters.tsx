@@ -49,16 +49,16 @@ export function TaskFilters({ filters, onFiltersChange }: TaskFiltersProps) {
   const hasActiveFilters = filters.search || filters.status !== 'all' || filters.priority !== 'all';
 
   return (
-    <div className="organic-filter-bar">
+    <div className="bg-white dark:bg-card rounded-3xl p-3 shadow-[0_4px_30px_rgba(0,0,0,0.06)] border border-black/4 dark:border-border flex flex-wrap items-center gap-3">
       {/* Search Input */}
-      <div className="organic-search-wrapper">
-        <Search className="organic-search-icon h-4 w-4" />
+      <div className="relative flex-1 min-w-[200px]">
+        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
         <input
           type="text"
           placeholder="Buscar tarefas..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          className="organic-search-input"
+          className="w-full border-none bg-secondary py-2.5 px-4 pl-10 rounded-full outline-none text-sm transition-all duration-200 focus:bg-white focus:shadow-[0_0_0_2px_var(--color-purple-500)] dark:focus:bg-accent"
         />
       </div>
 
