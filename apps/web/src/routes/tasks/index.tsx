@@ -163,19 +163,21 @@ function TasksPage() {
   };
 
   return (
-    <div className="organic-background min-h-screen">
+    <div className="relative min-h-full overflow-x-hidden before:content-[''] before:fixed before:w-[600px] before:h-[600px] before:bg-blue-500 before:rounded-full before:-z-10 before:pointer-events-none before:opacity-[0.12] before:-top-[200px] before:-right-[150px] before:blur-[80px] after:content-[''] after:fixed after:w-[500px] after:h-[500px] after:bg-purple-500 after:rounded-full after:-z-10 after:pointer-events-none after:opacity-[0.12] after:-bottom-[150px] after:-left-[100px] after:blur-[80px]">
       {/* Accent blob */}
-      <div className="organic-blob-accent" />
+      <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
       <div className="container mx-auto px-4 py-8 pb-24 md:pb-8">
         {/* Header */}
-        <div className="organic-page-header">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div>
-            <h1 className="organic-page-title">Tarefas</h1>
-            <p className="organic-page-subtitle">Gerencie suas tarefas e mantenha-se organizado</p>
+            <h1 className="text-[1.75rem] font-bold tracking-tight">Tarefas</h1>
+            <p className="text-muted-foreground text-sm mt-1">
+              Gerencie suas tarefas e mantenha-se organizado
+            </p>
           </div>
           <Button
             onClick={() => setIsFormOpen(true)}
-            className="organic-button organic-button-primary"
+            className="rounded-full! px-6 py-3 font-medium transition-all duration-200 bg-purple-500! text-white! border-none! hover:-translate-y-0.5 hover:shadow-[0_8px_25px_-5px_rgba(139,92,246,0.5)]"
           >
             <Plus className="mr-2 h-4 w-4" />
             Nova Tarefa
@@ -183,9 +185,9 @@ function TasksPage() {
         </div>
 
         {/* Two-column layout */}
-        <div className="tasks-page-grid">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] gap-6">
           {/* Main Content - Tasks */}
-          <div className="tasks-main-content">
+          <div className="flex flex-col gap-6 min-w-0">
             <TaskFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
             <TaskList
@@ -200,33 +202,49 @@ function TasksPage() {
           </div>
 
           {/* Sidebar - Clock, Calendar, Summary */}
-          <div className="tasks-sidebar">
+          <div className="flex flex-col gap-4 max-lg:grid max-lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
             <DigitalClock />
 
             <MiniCalendar tasks={allTasks} />
 
             {/* Quick Stats */}
-            <div className="quick-stats">
-              <div className="quick-stats-title">
+            <div className="bg-white dark:bg-card rounded-[1.25rem] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border">
+              <div className="font-semibold text-sm mb-3 flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-blue-500" />
                 Resumo
               </div>
-              <div className="quick-stats-grid">
-                <div className="quick-stat-item">
-                  <div className="quick-stat-value text-amber-600">{quickStats.todo}</div>
-                  <div className="quick-stat-label">Pendentes</div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="text-center p-3 rounded-xl bg-secondary">
+                  <div className="text-2xl font-bold leading-none text-amber-600">
+                    {quickStats.todo}
+                  </div>
+                  <div className="text-[0.65rem] text-muted-foreground mt-1 uppercase">
+                    Pendentes
+                  </div>
                 </div>
-                <div className="quick-stat-item">
-                  <div className="quick-stat-value text-purple-600">{quickStats.inProgress}</div>
-                  <div className="quick-stat-label">Em progresso</div>
+                <div className="text-center p-3 rounded-xl bg-secondary">
+                  <div className="text-2xl font-bold leading-none text-purple-600">
+                    {quickStats.inProgress}
+                  </div>
+                  <div className="text-[0.65rem] text-muted-foreground mt-1 uppercase">
+                    Em progresso
+                  </div>
                 </div>
-                <div className="quick-stat-item">
-                  <div className="quick-stat-value text-green-600">{quickStats.done}</div>
-                  <div className="quick-stat-label">Concluídas</div>
+                <div className="text-center p-3 rounded-xl bg-secondary">
+                  <div className="text-2xl font-bold leading-none text-green-600">
+                    {quickStats.done}
+                  </div>
+                  <div className="text-[0.65rem] text-muted-foreground mt-1 uppercase">
+                    Concluídas
+                  </div>
                 </div>
-                <div className="quick-stat-item">
-                  <div className="quick-stat-value text-red-600">{quickStats.highPriority}</div>
-                  <div className="quick-stat-label">Alta prioridade</div>
+                <div className="text-center p-3 rounded-xl bg-secondary">
+                  <div className="text-2xl font-bold leading-none text-red-600">
+                    {quickStats.highPriority}
+                  </div>
+                  <div className="text-[0.65rem] text-muted-foreground mt-1 uppercase">
+                    Alta prioridade
+                  </div>
                 </div>
               </div>
             </div>
