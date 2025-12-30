@@ -23,31 +23,19 @@ interface TaskCardProps {
   assigneeName?: string;
 }
 
-function getStatusBadgeClass(status: TaskStatus): string {
-  switch (status) {
-    case TaskStatus.TODO:
-      return 'organic-badge status-pending';
-    case TaskStatus.IN_PROGRESS:
-      return 'organic-badge status-progress';
-    case TaskStatus.DONE:
-      return 'organic-badge status-done';
-    default:
-      return 'organic-badge';
-  }
-}
+const badgeBase = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium';
 
-function getPriorityBadgeClass(priority: TaskPriority): string {
-  switch (priority) {
-    case TaskPriority.LOW:
-      return 'organic-badge priority-low';
-    case TaskPriority.MEDIUM:
-      return 'organic-badge priority-medium';
-    case TaskPriority.HIGH:
-      return 'organic-badge priority-high';
-    default:
-      return 'organic-badge';
-  }
-}
+const statusBadgeStyles = {
+  [TaskStatus.TODO]: `${badgeBase} bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400`,
+  [TaskStatus.IN_PROGRESS]: `${badgeBase} bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400`,
+  [TaskStatus.DONE]: `${badgeBase} bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400`,
+};
+
+const priorityBadgeStyles = {
+  [TaskPriority.LOW]: `${badgeBase} bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400`,
+  [TaskPriority.MEDIUM]: `${badgeBase} bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400`,
+  [TaskPriority.HIGH]: `${badgeBase} bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400`,
+};
 
 export function TaskCard({
   task,
@@ -66,7 +54,7 @@ export function TaskCard({
   const canChangeStatus = isCreator || isAssignee;
 
   return (
-    <div className="organic-task-card group">
+    <div className="bg-white dark:bg-card rounded-[1.25rem] p-5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] border border-black/3 dark:border-border transition-all duration-200 hover:shadow-[0_12px_40px_rgba(0,0,0,0.08)] hover:-translate-y-1 group">
       {/* Header */}
       <div className="flex items-start justify-between gap-2 mb-3">
         <Link to="/tasks/$taskId" params={{ taskId: task.id }} className="flex-1 min-w-0">
@@ -134,9 +122,9 @@ export function TaskCard({
             </SelectContent>
           </Select>
         ) : (
-          <span className={getStatusBadgeClass(task.status)}>{taskStatusLabels[task.status]}</span>
+          <span className={statusBadgeStyles[task.status]}>{taskStatusLabels[task.status]}</span>
         )}
-        <span className={getPriorityBadgeClass(task.priority)}>
+        <span className={priorityBadgeStyles[task.priority]}>
           {taskPriorityLabels[task.priority]}
         </span>
       </div>

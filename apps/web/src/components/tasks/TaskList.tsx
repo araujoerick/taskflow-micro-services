@@ -62,7 +62,10 @@ export function TaskList({
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <div key={i} className="organic-task-card">
+          <div
+            key={i}
+            className="bg-white dark:bg-card rounded-[1.25rem] p-5 shadow-[0_2px_20px_rgba(0,0,0,0.04)] border border-black/3 dark:border-border"
+          >
             <Skeleton className="h-5 w-3/4 mb-3 rounded-full" />
             <div className="flex gap-2 mb-3">
               <Skeleton className="h-6 w-20 rounded-full" />
@@ -78,7 +81,7 @@ export function TaskList({
 
   if (tasks.length === 0) {
     return (
-      <div className="organic-chart-container flex flex-col items-center justify-center py-16 text-center">
+      <div className="bg-white dark:bg-card rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border h-full flex flex-col items-center justify-center py-16 text-center">
         <div className="w-20 h-20 rounded-full bg-purple-100 flex items-center justify-center mb-4">
           <ListTodo className="h-10 w-10 text-purple-400" />
         </div>
@@ -105,21 +108,21 @@ export function TaskList({
       </div>
 
       {totalPages > 1 && (
-        <div className="organic-pagination">
+        <div className="flex items-center justify-center gap-2">
           <button
-            className="organic-pagination-button"
+            className="w-10 h-10 rounded-full bg-white dark:bg-card border border-black/6 dark:border-border flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-purple-500 hover:text-white hover:border-purple-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-current disabled:hover:border-black/6"
             onClick={() => onPageChange(page - 1)}
             disabled={page <= 1}
           >
             <ChevronLeft className="h-4 w-4" />
           </button>
 
-          <span className="organic-pagination-info">
+          <span className="px-4 text-sm text-muted-foreground">
             Página {page} de {totalPages}
           </span>
 
           <button
-            className="organic-pagination-button"
+            className="w-10 h-10 rounded-full bg-white dark:bg-card border border-black/6 dark:border-border flex items-center justify-center transition-all duration-200 cursor-pointer hover:bg-purple-500 hover:text-white hover:border-purple-500 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white disabled:hover:text-current disabled:hover:border-black/6"
             onClick={() => onPageChange(page + 1)}
             disabled={page >= totalPages}
           >
