@@ -1,12 +1,14 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { Plus } from 'lucide-react';
+import { Plus, BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { DeleteTaskDialog } from '@/components/tasks/DeleteTaskDialog';
+import { DigitalClock } from '@/components/dashboard/DigitalClock';
+import { MiniCalendar } from '@/components/dashboard/MiniCalendar';
 import {
   useTasks,
   useCreateTask,
@@ -14,6 +16,7 @@ import {
   useDeleteTask,
   useUpdateTaskStatus,
 } from '@/hooks/queries/useTasks';
+import { TaskStatus as TaskStatusEnum, TaskPriority } from '@repo/types';
 import type { Task, TaskFilters as TaskFiltersType, TaskStatus } from '@repo/types';
 import type { CreateTaskInput } from '@/schemas/task.schema';
 
@@ -50,10 +53,22 @@ function TasksPage() {
   };
 
   const { data, isLoading } = useTasks(queryFilters);
+  // Fetch all tasks for sidebar stats (without pagination filters)
+  const { data: allTasksData } = useTasks({ limit: 1000 });
+  const allTasks = allTasksData?.data || [];
+
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
   const deleteTask = useDeleteTask();
   const updateTaskStatus = useUpdateTaskStatus();
+
+  const quickStats = useMemo(() => {
+    const todo = allTasks.filter((t) => t.status === TaskStatusEnum.TODO).length;
+    const inProgress = allTasks.filter((t) => t.status === TaskStatusEnum.IN_PROGRESS).length;
+    const done = allTasks.filter((t) => t.status === TaskStatusEnum.DONE).length;
+    const highPriority = allTasks.filter((t) => t.priority === TaskPriority.HIGH).length;
+    return { todo, inProgress, done, highPriority };
+  }, [allTasks]);
 
   const handleFiltersChange = (newFilters: typeof filters) => {
     setFilters(newFilters);
@@ -148,52 +163,95 @@ function TasksPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 pb-24 md:pb-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-3xl font-bold">Tarefas</h1>
-          <p className="text-muted-foreground mt-1">
-            Gerencie suas tarefas e mantenha-se organizado
-          </p>
+    <div className="organic-background min-h-screen">
+      {/* Accent blob */}
+      <div className="organic-blob-accent" />
+      <div className="container mx-auto px-4 py-8 pb-24 md:pb-8">
+        {/* Header */}
+        <div className="organic-page-header">
+          <div>
+            <h1 className="organic-page-title">Tarefas</h1>
+            <p className="organic-page-subtitle">Gerencie suas tarefas e mantenha-se organizado</p>
+          </div>
+          <Button
+            onClick={() => setIsFormOpen(true)}
+            className="organic-button organic-button-primary"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Nova Tarefa
+          </Button>
         </div>
-        <Button onClick={() => setIsFormOpen(true)}>
-          <Plus className="mr-2 h-4 w-4" />
-          Nova Tarefa
-        </Button>
-      </div>
 
-      <div className="space-y-6">
-        <TaskFilters filters={filters} onFiltersChange={handleFiltersChange} />
+        {/* Two-column layout */}
+        <div className="tasks-page-grid">
+          {/* Main Content - Tasks */}
+          <div className="tasks-main-content">
+            <TaskFilters filters={filters} onFiltersChange={handleFiltersChange} />
 
-        <TaskList
-          data={data}
-          isLoading={isLoading}
-          page={page}
-          onPageChange={setPage}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onStatusChange={handleStatusChange}
+            <TaskList
+              data={data}
+              isLoading={isLoading}
+              page={page}
+              onPageChange={setPage}
+              onEdit={handleEdit}
+              onDelete={handleDelete}
+              onStatusChange={handleStatusChange}
+            />
+          </div>
+
+          {/* Sidebar - Clock, Calendar, Summary */}
+          <div className="tasks-sidebar">
+            <DigitalClock />
+
+            <MiniCalendar tasks={allTasks} />
+
+            {/* Quick Stats */}
+            <div className="quick-stats">
+              <div className="quick-stats-title">
+                <BarChart3 className="h-4 w-4 text-blue-500" />
+                Resumo
+              </div>
+              <div className="quick-stats-grid">
+                <div className="quick-stat-item">
+                  <div className="quick-stat-value text-amber-600">{quickStats.todo}</div>
+                  <div className="quick-stat-label">Pendentes</div>
+                </div>
+                <div className="quick-stat-item">
+                  <div className="quick-stat-value text-purple-600">{quickStats.inProgress}</div>
+                  <div className="quick-stat-label">Em progresso</div>
+                </div>
+                <div className="quick-stat-item">
+                  <div className="quick-stat-value text-green-600">{quickStats.done}</div>
+                  <div className="quick-stat-label">Concluídas</div>
+                </div>
+                <div className="quick-stat-item">
+                  <div className="quick-stat-value text-red-600">{quickStats.highPriority}</div>
+                  <div className="quick-stat-label">Alta prioridade</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <TaskForm
+          open={isFormOpen}
+          onOpenChange={(open) => {
+            setIsFormOpen(open);
+            if (!open) setEditingTask(null);
+          }}
+          task={editingTask}
+          onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
+          isLoading={createTask.isPending || updateTask.isPending}
+        />
+
+        <DeleteTaskDialog
+          open={!!deletingTask}
+          onOpenChange={(open) => !open && setDeletingTask(null)}
+          task={deletingTask}
+          onConfirm={handleDeleteTask}
+          isLoading={deleteTask.isPending}
         />
       </div>
-
-      <TaskForm
-        open={isFormOpen}
-        onOpenChange={(open) => {
-          setIsFormOpen(open);
-          if (!open) setEditingTask(null);
-        }}
-        task={editingTask}
-        onSubmit={editingTask ? handleUpdateTask : handleCreateTask}
-        isLoading={createTask.isPending || updateTask.isPending}
-      />
-
-      <DeleteTaskDialog
-        open={!!deletingTask}
-        onOpenChange={(open) => !open && setDeletingTask(null)}
-        task={deletingTask}
-        onConfirm={handleDeleteTask}
-        isLoading={deleteTask.isPending}
-      />
     </div>
   );
 }
