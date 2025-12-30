@@ -123,39 +123,58 @@ export function MiniCalendar({ tasks }: MiniCalendarProps) {
   }
 
   return (
-    <div className="mini-calendar">
-      <div className="mini-calendar-header">
+    <div className="bg-white dark:bg-card rounded-[1.25rem] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border">
+      <div className="flex items-center justify-between mb-3">
         <button
           onClick={goToToday}
-          className="mini-calendar-title hover:text-blue-500 transition-colors cursor-pointer"
+          className="font-semibold text-sm hover:text-blue-500 transition-colors cursor-pointer"
         >
           {MONTHS[month]} {year}
         </button>
-        <div className="mini-calendar-nav">
-          <button onClick={goToPrevMonth} aria-label="Mês anterior">
+        <div className="flex gap-1">
+          <button
+            onClick={goToPrevMonth}
+            aria-label="Mês anterior"
+            className="w-7 h-7 rounded-full border-none bg-transparent cursor-pointer flex items-center justify-center transition-all duration-150 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
             <ChevronLeft className="h-4 w-4" />
           </button>
-          <button onClick={goToNextMonth} aria-label="Próximo mês">
+          <button
+            onClick={goToNextMonth}
+            aria-label="Próximo mês"
+            className="w-7 h-7 rounded-full border-none bg-transparent cursor-pointer flex items-center justify-center transition-all duration-150 text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
             <ChevronRight className="h-4 w-4" />
           </button>
         </div>
       </div>
 
-      <div className="mini-calendar-weekdays">
+      <div className="grid grid-cols-7 gap-0.5 mb-1">
         {WEEKDAYS.map((day) => (
-          <div key={day} className="mini-calendar-weekday">
+          <div
+            key={day}
+            className="text-center text-[0.65rem] font-medium text-muted-foreground py-1 uppercase"
+          >
             {day}
           </div>
         ))}
       </div>
 
-      <div className="mini-calendar-days">
+      <div className="grid grid-cols-7 gap-0.5">
         {calendarDays.map((dayInfo, index) => (
           <div
             key={index}
-            className={`mini-calendar-day ${dayInfo.isOtherMonth ? 'other-month' : ''} ${dayInfo.isToday ? 'today' : ''} ${dayInfo.hasTasks ? 'has-tasks' : ''}`}
+            className={`aspect-square flex items-center justify-center text-xs rounded-full cursor-pointer transition-all duration-150 relative hover:bg-secondary
+              ${dayInfo.isOtherMonth ? 'text-muted-foreground opacity-40' : ''}
+              ${dayInfo.isToday ? 'bg-blue-500 text-white font-semibold hover:bg-blue-500' : ''}
+            `}
           >
             {dayInfo.day}
+            {dayInfo.hasTasks && (
+              <span
+                className={`absolute bottom-0.5 w-1 h-1 rounded-full ${dayInfo.isToday ? 'bg-white' : 'bg-purple-500'}`}
+              />
+            )}
           </div>
         ))}
       </div>
