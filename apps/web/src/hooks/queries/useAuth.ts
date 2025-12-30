@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useNavigate } from '@tanstack/react-router';
 import { authService } from '@/api/services/auth.service';
 import { queryKeys } from '@/utils/query-keys';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,16 +27,15 @@ export function useRegister() {
 export function useLogout() {
   const { logout } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
 
   return useMutation({
-    mutationFn: () => authService.logout(),
-    onSuccess: () => {
-      logout();
-      queryClient.clear();
+    mutationFn: async () => {
+      await logout();
     },
-    onError: () => {
-      logout();
+    onSettled: () => {
       queryClient.clear();
+      navigate({ to: '/login' });
     },
   });
 }
