@@ -42,8 +42,8 @@ export function StatusChart({ tasks, isLoading }: StatusChartProps) {
 
   if (isLoading) {
     return (
-      <div className="organic-chart-container">
-        <div className="organic-chart-title">
+      <div className="bg-white dark:bg-card rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border h-full">
+        <div className="text-base font-semibold mb-4 flex items-center gap-2">
           <PieChartIcon className="h-5 w-5 text-purple-500" />
           Tarefas por Status
         </div>
@@ -54,8 +54,8 @@ export function StatusChart({ tasks, isLoading }: StatusChartProps) {
 
   if (tasks.length === 0) {
     return (
-      <div className="organic-chart-container">
-        <div className="organic-chart-title">
+      <div className="bg-white dark:bg-card rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border h-full">
+        <div className="text-base font-semibold mb-4 flex items-center gap-2">
           <PieChartIcon className="h-5 w-5 text-purple-500" />
           Tarefas por Status
         </div>
@@ -67,8 +67,8 @@ export function StatusChart({ tasks, isLoading }: StatusChartProps) {
   }
 
   return (
-    <div className="organic-chart-container">
-      <div className="organic-chart-title">
+    <div className="bg-white dark:bg-card rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border h-full">
+      <div className="text-base font-semibold mb-4 flex items-center gap-2">
         <PieChartIcon className="h-5 w-5 text-purple-500" />
         Tarefas por Status
       </div>
