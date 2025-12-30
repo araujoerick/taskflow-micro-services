@@ -25,31 +25,19 @@ export const Route = createFileRoute('/')({
   component: DashboardPage,
 });
 
-function getStatusBadgeClass(status: TaskStatus): string {
-  switch (status) {
-    case TaskStatus.TODO:
-      return 'organic-badge status-pending';
-    case TaskStatus.IN_PROGRESS:
-      return 'organic-badge status-progress';
-    case TaskStatus.DONE:
-      return 'organic-badge status-done';
-    default:
-      return 'organic-badge';
-  }
-}
+const badgeBase = 'inline-flex items-center px-3 py-1 rounded-full text-xs font-medium';
 
-function getPriorityBadgeClass(priority: TaskPriority): string {
-  switch (priority) {
-    case TaskPriority.LOW:
-      return 'organic-badge priority-low';
-    case TaskPriority.MEDIUM:
-      return 'organic-badge priority-medium';
-    case TaskPriority.HIGH:
-      return 'organic-badge priority-high';
-    default:
-      return 'organic-badge';
-  }
-}
+const statusBadgeStyles = {
+  [TaskStatus.TODO]: `${badgeBase} bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400`,
+  [TaskStatus.IN_PROGRESS]: `${badgeBase} bg-purple-100 text-purple-800 dark:bg-purple-500/20 dark:text-purple-400`,
+  [TaskStatus.DONE]: `${badgeBase} bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400`,
+};
+
+const priorityBadgeStyles = {
+  [TaskPriority.LOW]: `${badgeBase} bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400`,
+  [TaskPriority.MEDIUM]: `${badgeBase} bg-amber-100 text-amber-800 dark:bg-amber-500/20 dark:text-amber-400`,
+  [TaskPriority.HIGH]: `${badgeBase} bg-red-100 text-red-800 dark:bg-red-500/20 dark:text-red-400`,
+};
 
 function DashboardPage() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -83,16 +71,18 @@ function DashboardPage() {
   };
 
   return (
-    <div className="organic-background min-h-screen">
-      <div className="organic-blob-accent" />
+    <div className="relative min-h-full overflow-x-hidden before:content-[''] before:fixed before:w-[600px] before:h-[600px] before:bg-blue-500 before:rounded-full before:-z-10 before:pointer-events-none before:opacity-[0.12] before:-top-[200px] before:-right-[150px] before:blur-[80px] after:content-[''] after:fixed after:w-[500px] after:h-[500px] after:bg-purple-500 after:rounded-full after:-z-10 after:pointer-events-none after:opacity-[0.12] after:-bottom-[150px] after:-left-[100px] after:blur-[80px]">
+      <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
 
       <div className="container mx-auto px-4 py-8 pb-24 md:pb-8">
         {/* Header with Clock */}
-        <div className="organic-page-header">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
             <div>
-              <h1 className="organic-page-title">Dashboard</h1>
-              <p className="organic-page-subtitle">Visão geral das suas tarefas e progresso</p>
+              <h1 className="text-[1.75rem] font-bold tracking-tight">Dashboard</h1>
+              <p className="text-muted-foreground text-sm mt-1">
+                Visão geral das suas tarefas e progresso
+              </p>
             </div>
             <div className="sm:ml-auto">
               <DigitalClock />
@@ -100,7 +90,7 @@ function DashboardPage() {
           </div>
           <Button
             onClick={() => setIsFormOpen(true)}
-            className="organic-button organic-button-primary"
+            className="rounded-full! px-6 py-3 font-medium transition-all duration-200 bg-purple-500! text-white! border-none! hover:-translate-y-0.5 hover:shadow-[0_8px_25px_-5px_rgba(139,92,246,0.5)]"
           >
             <Plus className="mr-2 h-4 w-4" />
             Nova Tarefa
@@ -111,13 +101,13 @@ function DashboardPage() {
         <StatsCards tasks={tasks} isLoading={isLoading} />
 
         {/* Main Grid: Content + Sidebar */}
-        <div className="dashboard-grid mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mt-6">
           {/* Main Content */}
-          <div className="dashboard-main">
+          <div className="flex flex-col gap-6 min-w-0">
             {/* Recent Tasks Section */}
-            <div className="organic-chart-container">
+            <div className="bg-white dark:bg-card rounded-3xl p-6 shadow-[0_4px_30px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border h-full">
               <div className="flex items-center justify-between mb-4">
-                <div className="organic-chart-title">
+                <div className="text-base font-semibold flex items-center gap-2">
                   <Clock className="h-5 w-5 text-purple-500" />
                   Tarefas Recentes
                 </div>
@@ -136,7 +126,10 @@ function DashboardPage() {
               {isLoading ? (
                 <div className="space-y-3">
                   {[1, 2, 3, 4, 5].map((i) => (
-                    <div key={i} className="organic-recent-task">
+                    <div
+                      key={i}
+                      className="bg-white dark:bg-card rounded-2xl py-3.5 px-4 shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-black/3 dark:border-border flex items-center justify-between gap-4"
+                    >
                       <div className="space-y-2">
                         <Skeleton className="h-4 w-48 rounded-full" />
                         <Skeleton className="h-3 w-24 rounded-full" />
@@ -169,7 +162,7 @@ function DashboardPage() {
                       key={task.id}
                       to="/tasks/$taskId"
                       params={{ taskId: task.id }}
-                      className="organic-recent-task"
+                      className="bg-white dark:bg-card rounded-2xl py-3.5 px-4 shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-black/3 dark:border-border flex items-center justify-between gap-4 transition-all duration-200 hover:shadow-[0_6px_25px_rgba(0,0,0,0.08)] hover:translate-x-1"
                     >
                       <div className="min-w-0 flex-1">
                         <p className="font-medium truncate">{task.title}</p>
@@ -178,10 +171,10 @@ function DashboardPage() {
                         </p>
                       </div>
                       <div className="flex gap-2 shrink-0">
-                        <span className={getStatusBadgeClass(task.status)}>
+                        <span className={statusBadgeStyles[task.status]}>
                           {taskStatusLabels[task.status]}
                         </span>
-                        <span className={getPriorityBadgeClass(task.priority)}>
+                        <span className={priorityBadgeStyles[task.priority]}>
                           {taskPriorityLabels[task.priority]}
                         </span>
                       </div>
@@ -193,7 +186,7 @@ function DashboardPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="dashboard-sidebar">
+          <div className="flex flex-col gap-4 max-lg:grid max-lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
             <MiniCalendar tasks={tasks} />
             <ActivityHeatmap tasks={tasks} />
           </div>
