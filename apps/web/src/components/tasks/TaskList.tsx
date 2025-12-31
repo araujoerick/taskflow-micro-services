@@ -25,7 +25,7 @@ export function TaskList({
   onDelete,
   onStatusChange,
 }: TaskListProps) {
-  const tasks = data?.data || [];
+  const tasks = useMemo(() => data?.data || [], [data?.data]);
   const totalPages = data?.meta?.totalPages || 1;
 
   // Get unique user IDs from tasks (creators and assignees)
