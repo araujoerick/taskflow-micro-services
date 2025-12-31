@@ -22,15 +22,15 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
+    <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b bg-card">
       <div className="container h-full mx-auto px-4 flex items-center justify-between">
         {/* Logo & Navigation */}
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <ListTodo className="h-5 w-5 text-primary-foreground" />
+            <div className="h-10 w-10">
+              <img src="./logoonly.png" alt="" />
             </div>
-            <span className="font-semibold text-lg hidden sm:inline">TaskFlow</span>
+            <span className="font-bold text-xl hidden sm:inline text-primary">TaskFlow</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
