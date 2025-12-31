@@ -75,13 +75,17 @@ function OrganicStatCard({ title, value, subtitle, icon: Icon, color }: StatCard
       </div>
 
       {/* Content */}
-      <div className="relative z-1 p-5 pr-14 text-white h-full flex flex-col justify-between">
+      <div className="relative z-1 p-3 sm:p-5 pr-10 sm:pr-14 text-white h-full flex flex-col justify-between">
         <div>
-          <h3 className="text-xs font-bold uppercase tracking-wider opacity-80">{title}</h3>
-          <p className="text-4xl font-black mt-2 leading-none">{value}</p>
+          <h3 className="text-[0.6rem] sm:text-xs font-bold uppercase tracking-wider opacity-80">
+            {title}
+          </h3>
+          <p className="lg:text-4xl text-xl sm:text-4xl font-black mt-1 sm:mt-2 leading-none">
+            {value}
+          </p>
         </div>
 
-        <p className="text-[10px] font-medium mt-4 opacity-90 leading-tight bg-white/20 w-fit px-2 py-1 rounded-full">
+        <p className="text-[8px] sm:text-[10px] font-medium md:mt-2 mt-0 sm:mt-1 opacity-90 leading-tight bg-white/20 w-fit px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full">
           {subtitle}
         </p>
       </div>
@@ -158,7 +162,7 @@ export function StatsCards({ tasks, isLoading }: StatsCardsProps) {
 
   return (
     <>
-      {/* SVG definitions for clip-path - rendered once */}
+      {/* SVG definitions for clip-path */}
       <OrganicCardClipPath />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
