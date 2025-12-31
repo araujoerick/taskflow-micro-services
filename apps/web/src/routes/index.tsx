@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { createFileRoute, redirect, Link } from '@tanstack/react-router';
-import { Plus, ArrowRight, Clock } from 'lucide-react';
+import { ArrowRight, Clock } from 'lucide-react';
 import { toast } from 'sonner';
 import { useTasks, useCreateTask } from '@/hooks/queries/useTasks';
 import { StatsCards } from '@/components/dashboard/StatsCards';
@@ -8,6 +8,7 @@ import { DigitalClock } from '@/components/dashboard/DigitalClock';
 import { MiniCalendar } from '@/components/dashboard/MiniCalendar';
 import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
 import { TaskForm } from '@/components/tasks/TaskForm';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { taskStatusLabels, taskPriorityLabels } from '@/utils/enum-mappers';
@@ -44,7 +45,7 @@ function DashboardPage() {
 
   // Fetch all tasks without pagination for dashboard stats
   const { data, isLoading } = useTasks({ limit: 1000 });
-  const tasks = data?.data || [];
+  const tasks = useMemo(() => data?.data || [], [data?.data]);
   const createTask = useCreateTask();
 
   const recentTasks = useMemo(() => {
@@ -74,34 +75,18 @@ function DashboardPage() {
     <div className="relative min-h-full overflow-x-hidden before:content-[''] before:fixed before:w-[600px] before:h-[600px] before:bg-blue-500 before:rounded-full before:-z-10 before:pointer-events-none before:opacity-[0.12] before:-top-[200px] before:-right-[150px] before:blur-[80px] after:content-[''] after:fixed after:w-[500px] after:h-[500px] after:bg-purple-500 after:rounded-full after:-z-10 after:pointer-events-none after:opacity-[0.12] after:-bottom-[150px] after:-left-[100px] after:blur-[80px]">
       <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
 
-      <div className="container mx-auto px-4 py-8 pb-24 md:pb-8">
-        {/* Header with Clock */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4 flex-1">
-            <div>
-              <h1 className="text-[1.75rem] font-bold tracking-tight">Dashboard</h1>
-              <p className="text-muted-foreground text-sm mt-1">
-                Visão geral das suas tarefas e progresso
-              </p>
-            </div>
-            <div className="sm:ml-auto">
-              <DigitalClock />
-            </div>
-          </div>
-          <Button
-            onClick={() => setIsFormOpen(true)}
-            className="rounded-full! px-6 py-3 font-medium transition-all duration-200 bg-purple-500! text-white! border-none! hover:-translate-y-0.5 hover:shadow-[0_8px_25px_-5px_rgba(139,92,246,0.5)]"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Tarefa
-          </Button>
-        </div>
+      <div className="container mx-auto px-4 py-8 pb-24 md:pb-8 max-w-7xl">
+        <PageHeader
+          title="Dashboard"
+          subtitle="Visão geral das suas tarefas e progresso"
+          onNewTask={() => setIsFormOpen(true)}
+        />
 
         {/* Stats Cards */}
         <StatsCards tasks={tasks} isLoading={isLoading} />
 
         {/* Main Grid: Content + Sidebar */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-6 mt-6">
           {/* Main Content */}
           <div className="flex flex-col gap-6 min-w-0">
             {/* Recent Tasks Section */}
@@ -186,9 +171,12 @@ function DashboardPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="flex flex-col gap-4 max-lg:grid max-lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
+          <div className="gap-4 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
+            <div className="max-md:row-span-2 gap-4 flex flex-col my-auto">
+              <DigitalClock />
+              <ActivityHeatmap tasks={tasks} />
+            </div>
             <MiniCalendar tasks={tasks} />
-            <ActivityHeatmap tasks={tasks} />
           </div>
         </div>
 
