@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Flame } from 'lucide-react';
 import type { Task } from '@repo/types';
 import { TaskStatus } from '@repo/types';
@@ -13,7 +13,8 @@ interface DayActivity {
   level: number;
 }
 
-const WEEKS_TO_SHOW = 12;
+const CELL_SIZE = 12; // w-3 = 12px
+const GAP_SIZE = 3; // gap-[3px]
 
 function getActivityLevel(count: number): number {
   if (count === 0) return 0;
@@ -40,6 +41,28 @@ const levelStyles = {
 } as const;
 
 export function ActivityHeatmap({ tasks }: ActivityHeatmapProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [weeksToShow, setWeeksToShow] = useState(19);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const calculateWeeks = () => {
+      const containerWidth = container.offsetWidth;
+      const weekWidth = CELL_SIZE + GAP_SIZE;
+      const availableWeeks = Math.floor(containerWidth / weekWidth);
+      setWeeksToShow(Math.max(4, availableWeeks));
+    };
+
+    calculateWeeks();
+
+    const resizeObserver = new ResizeObserver(calculateWeeks);
+    resizeObserver.observe(container);
+
+    return () => resizeObserver.disconnect();
+  }, []);
+
   const { activityData, totalCompleted } = useMemo(() => {
     const completedByDate = new Map<string, number>();
 
@@ -59,16 +82,16 @@ export function ActivityHeatmap({ tasks }: ActivityHeatmapProps) {
     const startOfWeek = new Date(today);
     startOfWeek.setDate(today.getDate() - today.getDay());
 
-    // Go back WEEKS_TO_SHOW weeks
+    // Go back weeksToShow weeks
     const startDate = new Date(startOfWeek);
-    startDate.setDate(startDate.getDate() - (WEEKS_TO_SHOW - 1) * 7);
+    startDate.setDate(startDate.getDate() - (weeksToShow - 1) * 7);
 
     const weeks: DayActivity[][] = [];
     let total = 0;
 
     const currentDate = new Date(startDate);
 
-    for (let week = 0; week < WEEKS_TO_SHOW; week++) {
+    for (let week = 0; week < weeksToShow; week++) {
       const weekDays: DayActivity[] = [];
 
       for (let day = 0; day < 7; day++) {
@@ -89,10 +112,10 @@ export function ActivityHeatmap({ tasks }: ActivityHeatmapProps) {
     }
 
     return { activityData: weeks, totalCompleted: total };
-  }, [tasks]);
+  }, [tasks, weeksToShow]);
 
   return (
-    <div className="bg-white dark:bg-card rounded-[1.25rem] p-4 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border">
+    <div className="bg-white dark:bg-card rounded-[1.25rem] p-4 max-md:py-6 shadow-[0_4px_20px_rgba(0,0,0,0.04)] border border-black/4 dark:border-border max-md:order-1">
       <div className="flex items-center justify-between mb-3">
         <div className="font-semibold text-sm flex items-center gap-2">
           <Flame className="h-4 w-4 text-orange-500" />
@@ -104,7 +127,7 @@ export function ActivityHeatmap({ tasks }: ActivityHeatmapProps) {
         </div>
       </div>
 
-      <div className="flex gap-[3px] overflow-x-auto pb-2">
+      <div ref={containerRef} className="flex gap-[3px] pb-2 justify-center">
         {activityData.map((week, weekIndex) => (
           <div key={weekIndex} className="flex flex-col gap-[3px]">
             {week.map((day, dayIndex) => (
