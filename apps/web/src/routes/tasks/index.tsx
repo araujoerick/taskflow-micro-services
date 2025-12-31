@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { Plus, BarChart3 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { DeleteTaskDialog } from '@/components/tasks/DeleteTaskDialog';
+import { PageHeader } from '@/components/layout/PageHeader';
 import { DigitalClock } from '@/components/dashboard/DigitalClock';
 import { MiniCalendar } from '@/components/dashboard/MiniCalendar';
 import {
@@ -55,7 +55,7 @@ function TasksPage() {
   const { data, isLoading } = useTasks(queryFilters);
   // Fetch all tasks for sidebar stats (without pagination filters)
   const { data: allTasksData } = useTasks({ limit: 1000 });
-  const allTasks = allTasksData?.data || [];
+  const allTasks = useMemo(() => allTasksData?.data || [], [allTasksData?.data]);
 
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
@@ -166,23 +166,12 @@ function TasksPage() {
     <div className="relative min-h-full overflow-x-hidden before:content-[''] before:fixed before:w-[600px] before:h-[600px] before:bg-blue-500 before:rounded-full before:-z-10 before:pointer-events-none before:opacity-[0.12] before:-top-[200px] before:-right-[150px] before:blur-[80px] after:content-[''] after:fixed after:w-[500px] after:h-[500px] after:bg-purple-500 after:rounded-full after:-z-10 after:pointer-events-none after:opacity-[0.12] after:-bottom-[150px] after:-left-[100px] after:blur-[80px]">
       {/* Accent blob */}
       <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
-      <div className="container mx-auto px-4 py-8 pb-24 md:pb-8">
-        {/* Header */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-[1.75rem] font-bold tracking-tight">Tarefas</h1>
-            <p className="text-muted-foreground text-sm mt-1">
-              Gerencie suas tarefas e mantenha-se organizado
-            </p>
-          </div>
-          <Button
-            onClick={() => setIsFormOpen(true)}
-            className="rounded-full! px-6 py-3 font-medium transition-all duration-200 bg-purple-500! text-white! border-none! hover:-translate-y-0.5 hover:shadow-[0_8px_25px_-5px_rgba(139,92,246,0.5)]"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Tarefa
-          </Button>
-        </div>
+      <div className="container mx-auto px-4 py-8 pb-24 md:pb-8 max-w-7xl">
+        <PageHeader
+          title="Tarefas"
+          subtitle="Gerencie suas tarefas e mantenha-se organizado"
+          onNewTask={() => setIsFormOpen(true)}
+        />
 
         {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] gap-6">
