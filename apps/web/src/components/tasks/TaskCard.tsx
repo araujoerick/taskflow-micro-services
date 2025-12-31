@@ -75,7 +75,7 @@ export function TaskCard({
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-card border rounded-xl shadow-lg py-1 min-w-32 overflow-hidden">
+                <div className="absolute right-0 top-full mt-1 z-50 bg-white dark:bg-card border rounded-sm! shadow-lg py-1 min-w-32 overflow-hidden">
                   <button
                     className="w-full px-3 py-2 text-sm text-left hover:bg-purple-50 dark:hover:bg-purple-900/20 flex items-center gap-2 transition-colors"
                     onClick={() => {
@@ -113,7 +113,7 @@ export function TaskCard({
             <SelectTrigger className="h-7 w-auto text-xs px-3 rounded-full border-0 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 hover:bg-purple-200 dark:hover:bg-purple-900/50">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="rounded-xl">
+            <SelectContent className="rounded-sm!">
               {Object.values(TaskStatus).map((s) => (
                 <SelectItem key={s} value={s} className="rounded-lg">
                   {taskStatusLabels[s]}
