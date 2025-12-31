@@ -70,12 +70,10 @@ export function TaskFilters({ filters, onFiltersChange }: TaskFiltersProps) {
             <SelectValue placeholder="Status" />
           </div>
         </SelectTrigger>
-        <SelectContent className="rounded-xl">
-          <SelectItem value="all" className="rounded-lg">
-            Todos os Status
-          </SelectItem>
+        <SelectContent className="rounded-2xl">
+          <SelectItem value="all">Todos os Status</SelectItem>
           {Object.values(TaskStatus).map((status) => (
-            <SelectItem key={status} value={status} className="rounded-lg">
+            <SelectItem key={status} value={status}>
               {taskStatusLabels[status]}
             </SelectItem>
           ))}
@@ -90,12 +88,10 @@ export function TaskFilters({ filters, onFiltersChange }: TaskFiltersProps) {
             <SelectValue placeholder="Prioridade" />
           </div>
         </SelectTrigger>
-        <SelectContent className="rounded-xl">
-          <SelectItem value="all" className="rounded-lg">
-            Todas Prioridades
-          </SelectItem>
+        <SelectContent className="rounded-2xl">
+          <SelectItem value="all">Todas Prioridades</SelectItem>
           {Object.values(TaskPriority).map((priority) => (
-            <SelectItem key={priority} value={priority} className="rounded-lg">
+            <SelectItem key={priority} value={priority}>
               {taskPriorityLabels[priority]}
             </SelectItem>
           ))}
