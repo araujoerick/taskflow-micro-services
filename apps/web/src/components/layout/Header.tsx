@@ -1,25 +1,52 @@
-import { Link, useLocation, useNavigate } from '@tanstack/react-router';
-import { LayoutDashboard, ListTodo, LogOut } from 'lucide-react';
+import { Link, useLocation } from '@tanstack/react-router';
+import { LayoutDashboard, ListTodo, Plus } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
-import { useLogout } from '@/hooks/queries/useAuth';
+import { useNewTaskModal } from '@/contexts/NewTaskModalContext';
 
 const navItems = [
   { to: '/', label: 'Início', icon: LayoutDashboard },
   { to: '/tasks', label: 'Tarefas', icon: ListTodo },
 ] as const;
 
+function MobileNavBackground() {
+  return (
+    <div className="absolute inset-0 flex items-end">
+      {/* Left SIde */}
+      <div className="flex-1 h-full bg-card border-t border-border" />
+
+      {/* Center */}
+      <div className="relative w-[110px] h-full text-card">
+        <svg
+          viewBox="0 0 110 64"
+          className="absolute top-0 left-0 w-full h-full"
+          preserveAspectRatio="none"
+          fill="currentColor"
+        >
+          <path d="M 0 0 C 15 0 21 0 24 10 C 26 18 37 35 55 35 C 74 35 83 21 87 10 C 90 0 95 0 110 0 L 110 64 L 0 64 Z" />
+        </svg>
+        {/* Top Border */}
+        <svg
+          viewBox="0 0 110 64"
+          className="absolute top-0 left-0 w-full h-full fill-none stroke-border"
+          preserveAspectRatio="none"
+          strokeWidth="1"
+        >
+          <path d="M 0 0 C 15 0 21 0 24 10 C 26 18 37 35 55 35 C 74 35 83 21 87 10 C 90 0 95 0 110 0" />
+        </svg>
+      </div>
+
+      {/* Right Side */}
+      <div className="flex-1 h-full bg-card border-t border-border" />
+    </div>
+  );
+}
+
 export function Header() {
   const location = useLocation();
-  const navigate = useNavigate();
-  const logout = useLogout();
-
-  const handleMobileLogout = async () => {
-    await logout.mutateAsync();
-    navigate({ to: '/login' });
-  };
+  const { openModal } = useNewTaskModal();
 
   return (
     <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b bg-card">
@@ -66,34 +93,54 @@ export function Header() {
       </div>
 
       {/* Mobile Navigation */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 border-t bg-background flex items-center justify-around px-4">
-        {navItems.map(({ to, label, icon: Icon }) => {
-          const isActive =
-            location.pathname === to || (to !== '/' && location.pathname.startsWith(to));
+      <div className="md:hidden fixed bottom-0 left-0 right-0 z-50 h-16">
+        <MobileNavBackground />
 
-          return (
+        {/* Floating center button */}
+        <button
+          onClick={openModal}
+          className="absolute left-1/2 -translate-x-1/2 -top-6 w-13 h-13 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all active:scale-95 z-50"
+          aria-label="Nova Tarefa"
+        >
+          <Plus className="h-5 w-5" />
+        </button>
+
+        {/* Navigation Items */}
+        <nav className="relative z-10 h-full flex items-center">
+          <div className="flex-1 flex justify-center">
             <Link
-              key={to}
-              to={to}
+              to="/"
               className={cn(
-                'flex flex-col items-center gap-1 px-4 py-2 rounded-md transition-colors',
-                isActive ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+                'flex flex-col items-center gap-1 px-4 py-2 transition-colors',
+                location.pathname === '/'
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{label}</span>
+              <LayoutDashboard className="h-5 w-5" />
+              <span className="text-[10px] font-bold uppercase">Início</span>
             </Link>
-          );
-        })}
-        <button
-          onClick={handleMobileLogout}
-          disabled={logout.isPending}
-          className="flex flex-col items-center gap-1 px-4 py-2 rounded-md transition-colors text-muted-foreground hover:text-foreground"
-        >
-          <LogOut className="h-5 w-5" />
-          <span className="text-xs font-medium">Sair</span>
-        </button>
-      </nav>
+          </div>
+
+          {/* Central divider */}
+          <div className="w-[110px] shrink-0" />
+
+          <div className="flex-1 flex justify-center">
+            <Link
+              to="/tasks"
+              className={cn(
+                'flex flex-col items-center gap-1 px-4 py-2 transition-colors',
+                location.pathname.startsWith('/tasks')
+                  ? 'text-primary'
+                  : 'text-muted-foreground hover:text-foreground',
+              )}
+            >
+              <ListTodo className="h-5 w-5" />
+              <span className="text-[10px] font-bold uppercase">Tarefas</span>
+            </Link>
+          </div>
+        </nav>
+      </div>
     </header>
   );
 }
