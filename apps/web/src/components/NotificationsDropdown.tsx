@@ -81,7 +81,7 @@ export function NotificationsDropdown() {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-96 z-50">
+        <div className="fixed inset-x-4 top-16 sm:absolute sm:inset-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-96 z-50">
           <Card className="shadow-lg">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
