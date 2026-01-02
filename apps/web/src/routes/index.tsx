@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { createFileRoute, redirect, Link } from '@tanstack/react-router';
 import { ArrowRight, Clock } from 'lucide-react';
 import { toast } from 'sonner';
@@ -8,13 +8,14 @@ import { DigitalClock } from '@/components/dashboard/DigitalClock';
 import { MiniCalendar } from '@/components/dashboard/MiniCalendar';
 import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
 import { TaskForm } from '@/components/tasks/TaskForm';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { taskStatusLabels, taskPriorityLabels } from '@/utils/enum-mappers';
 import { TaskStatus, TaskPriority } from '@repo/types';
 import { formatRelativeTime } from '@/utils/date-formatters';
 import type { CreateTaskInput } from '@/schemas/task.schema';
+import { NewTaskButton } from '@/components/NewTaskButton';
+import { useNewTaskModal } from '@/contexts/NewTaskModalContext';
 
 export const Route = createFileRoute('/')({
   beforeLoad: () => {
@@ -41,7 +42,7 @@ const priorityBadgeStyles = {
 };
 
 function DashboardPage() {
-  const [isFormOpen, setIsFormOpen] = useState(false);
+  const { isOpen: isFormOpen, setIsOpen: setIsFormOpen, openModal } = useNewTaskModal();
 
   // Fetch all tasks without pagination for dashboard stats
   const { data, isLoading } = useTasks({ limit: 1000 });
@@ -76,12 +77,6 @@ function DashboardPage() {
       <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
 
       <div className="container mx-auto px-4 py-8 pb-24 md:pb-8 max-w-7xl">
-        <PageHeader
-          title="Dashboard"
-          subtitle="Visão geral das suas tarefas e progresso"
-          onNewTask={() => setIsFormOpen(true)}
-        />
-
         {/* Stats Cards */}
         <StatsCards tasks={tasks} isLoading={isLoading} />
 
@@ -96,16 +91,20 @@ function DashboardPage() {
                   <Clock className="h-5 w-5 text-purple-500" />
                   Tarefas Recentes
                 </div>
-                <Link to="/tasks">
+                <div>
                   <Button
                     variant="ghost"
                     size="sm"
                     className="rounded-full hover:bg-purple-50 hover:text-purple-600 dark:hover:bg-purple-900/20"
+                    asChild
                   >
-                    Ver todas
-                    <ArrowRight className="ml-2 h-4 w-4" />
+                    <Link to="/tasks">
+                      Ver todas
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Link>
                   </Button>
-                </Link>
+                  <NewTaskButton onNewTask={openModal} />
+                </div>
               </div>
 
               {isLoading ? (
@@ -135,7 +134,7 @@ function DashboardPage() {
                   <Button
                     variant="link"
                     className="text-purple-600"
-                    onClick={() => setIsFormOpen(true)}
+                    onClick={openModal}
                   >
                     Criar sua primeira tarefa
                   </Button>
