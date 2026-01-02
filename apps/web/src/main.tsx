@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { ThemeProvider } from 'next-themes';
 import { queryClient } from '@/api/react-query';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { NewTaskModalProvider } from '@/contexts/NewTaskModalContext';
 import { routeTree } from './routeTree.gen';
 import './index.css';
 
@@ -29,7 +30,9 @@ createRoot(document.getElementById('root')!).render(
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
-          <RouterProvider router={router} />
+          <NewTaskModalProvider>
+            <RouterProvider router={router} />
+          </NewTaskModalProvider>
         </AuthProvider>
         <ReactQueryDevtools initialIsOpen={false} />
       </QueryClientProvider>
