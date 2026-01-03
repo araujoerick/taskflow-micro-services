@@ -1,10 +1,11 @@
 import { Link, useLocation } from '@tanstack/react-router';
-import { LayoutDashboard, ListTodo, Plus } from 'lucide-react';
+import { LayoutDashboard, ListTodo } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { ThemeToggle } from './ThemeToggle';
 import { UserMenu } from './UserMenu';
 import { NotificationsDropdown } from '@/components/NotificationsDropdown';
 import { useNewTaskModal } from '@/contexts/NewTaskModalContext';
+import { NewTaskButton } from '../NewTaskButton';
 
 const navItems = [
   { to: '/', label: 'Início', icon: LayoutDashboard },
@@ -32,7 +33,7 @@ function MobileNavBackground() {
           viewBox="0 0 110 64"
           className="absolute top-0 left-0 w-full h-full fill-none stroke-border"
           preserveAspectRatio="none"
-          strokeWidth="1"
+          strokeWidth="2"
         >
           <path d="M 0 0 C 15 0 21 0 24 10 C 26 18 37 35 55 35 C 74 35 83 21 87 10 C 90 0 95 0 110 0" />
         </svg>
@@ -49,13 +50,17 @@ export function Header() {
   const { openModal } = useNewTaskModal();
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-40 h-16 border-b bg-card">
+    <header className="fixed top-0 left-0 right-0 z-40 h-16 md:border-b bg-(--organic-blue) md:bg-card">
       <div className="container h-full mx-auto px-4 flex items-center justify-between">
         {/* Logo & Navigation */}
         <div className="flex items-center gap-8">
           <Link to="/" className="flex items-center gap-2">
-            <div className="h-10 w-10">
-              <img src="./logoonly.png" alt="" />
+            <div className="h-10 w-10 rounded-full bg-white ring-1 ring-offset-1 ring-white md:ring-0 md:ring-offset-0 ring-(organic-blue) md:bg-inherit overflow-hidden">
+              <img
+                src="./logoonly.png"
+                alt="TaskFlow logo"
+                className="w-full h-full object-cover"
+              />
             </div>
             <span className="font-bold text-xl hidden sm:inline text-primary">TaskFlow</span>
           </Link>
@@ -97,13 +102,7 @@ export function Header() {
         <MobileNavBackground />
 
         {/* Floating center button */}
-        <button
-          onClick={openModal}
-          className="absolute left-1/2 -translate-x-1/2 -top-6 w-13 h-13 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all active:scale-95 z-50"
-          aria-label="Nova Tarefa"
-        >
-          <Plus className="h-5 w-5" />
-        </button>
+        <NewTaskButton variant="circular" onNewTask={openModal} />
 
         {/* Navigation Items */}
         <nav className="relative z-10 h-full flex items-center">
