@@ -14,8 +14,8 @@ import { taskStatusLabels, taskPriorityLabels } from '@/utils/enum-mappers';
 import { TaskStatus, TaskPriority } from '@repo/types';
 import { formatRelativeTime } from '@/utils/date-formatters';
 import type { CreateTaskInput } from '@/schemas/task.schema';
-import { NewTaskButton } from '@/components/NewTaskButton';
 import { useNewTaskModal } from '@/contexts/NewTaskModalContext';
+import { NewTaskButton } from '@/components/NewTaskButton';
 
 export const Route = createFileRoute('/')({
   beforeLoad: () => {
@@ -103,7 +103,6 @@ function DashboardPage() {
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Link>
                   </Button>
-                  <NewTaskButton onNewTask={openModal} />
                 </div>
               </div>
 
@@ -131,11 +130,7 @@ function DashboardPage() {
                     <Clock className="h-8 w-8 text-purple-400" />
                   </div>
                   <p className="mb-2">Nenhuma tarefa ainda.</p>
-                  <Button
-                    variant="link"
-                    className="text-purple-600"
-                    onClick={openModal}
-                  >
+                  <Button variant="link" className="text-purple-600" onClick={openModal}>
                     Criar sua primeira tarefa
                   </Button>
                 </div>
@@ -172,7 +167,10 @@ function DashboardPage() {
           {/* Sidebar */}
           <div className="gap-4 grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
             <div className="max-md:row-span-2 gap-4 flex flex-col my-auto">
-              <DigitalClock />
+              <div className="grid-cols-[1fr_auto] gap-4 w-full hidden md:grid">
+                <DigitalClock />
+                <NewTaskButton onNewTask={openModal} />
+              </div>
               <ActivityHeatmap tasks={tasks} />
             </div>
             <MiniCalendar tasks={tasks} />
