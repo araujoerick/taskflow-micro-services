@@ -26,10 +26,10 @@ export function NewTaskButton({ onNewTask, variant = 'default' }: NewTaskButtonP
     return (
       <button
         onClick={onNewTask}
-        className="w-14 h-14 rounded-full bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 hover:shadow-xl transition-all duration-200 hover:-translate-y-0.5"
+        className="absolute left-1/2 -translate-x-1/2 -top-6 w-13 h-13 rounded-full bg-(--organic-blue) text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all active:scale-105 z-50"
         aria-label="Nova Tarefa"
       >
-        <Plus className="h-7 w-7" strokeWidth={2.5} />
+        <Plus className="h-6 w-6" strokeWidth={2.5} />
       </button>
     );
   }
@@ -48,7 +48,7 @@ export function NewTaskButton({ onNewTask, variant = 'default' }: NewTaskButtonP
           style={{ clipPath: 'url(#organic-button-clip)' }}
         />
 
-        {/* Floating icon in the bite area */}
+        {/* Floating icon */}
         <div className="absolute top-0 right-0 w-[33%] h-[33%] rounded-full bg-white flex items-center justify-center shadow-[0_4px_15px_rgba(0,0,0,0.08)] z-2">
           <Plus className="w-[60%] h-[60%] text-(--organic-blue)" strokeWidth={2.5} />
         </div>
