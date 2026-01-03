@@ -6,7 +6,6 @@ import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TaskList } from '@/components/tasks/TaskList';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { DeleteTaskDialog } from '@/components/tasks/DeleteTaskDialog';
-import { PageHeader } from '@/components/layout/PageHeader';
 import { DigitalClock } from '@/components/dashboard/DigitalClock';
 import { MiniCalendar } from '@/components/dashboard/MiniCalendar';
 import {
@@ -19,6 +18,7 @@ import {
 import { TaskStatus as TaskStatusEnum, TaskPriority } from '@repo/types';
 import type { Task, TaskFilters as TaskFiltersType, TaskStatus } from '@repo/types';
 import type { CreateTaskInput } from '@/schemas/task.schema';
+import { NewTaskButton } from '@/components/NewTaskButton';
 
 export const Route = createFileRoute('/tasks/')({
   beforeLoad: () => {
@@ -167,12 +167,6 @@ function TasksPage() {
       {/* Accent blob */}
       <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
       <div className="container mx-auto px-4 py-8 pb-24 md:pb-8 max-w-7xl">
-        <PageHeader
-          title="Tarefas"
-          subtitle="Gerencie suas tarefas e mantenha-se organizado"
-          onNewTask={() => setIsFormOpen(true)}
-        />
-
         {/* Two-column layout */}
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] gap-6">
           {/* Main Content - Tasks */}
@@ -192,7 +186,12 @@ function TasksPage() {
 
           {/* Sidebar - Clock, Calendar, Summary */}
           <div className="flex flex-col gap-4 max-lg:grid max-lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
-            <DigitalClock />
+            <div className="grid grid-cols-[1fr_auto] gap-4">
+              <DigitalClock />
+              <div className="hidden lg:grid">
+                <NewTaskButton onNewTask={() => setIsFormOpen(true)} />
+              </div>
+            </div>
 
             <MiniCalendar tasks={allTasks} />
 
