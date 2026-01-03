@@ -6,6 +6,7 @@ import { useTasks, useCreateTask } from '@/hooks/queries/useTasks';
 import { StatsCards } from '@/components/dashboard/StatsCards';
 import { DigitalClock } from '@/components/dashboard/DigitalClock';
 import { MiniCalendar } from '@/components/dashboard/MiniCalendar';
+import { MobileWeekCalendar } from '@/components/dashboard/MobileWeekCalendar';
 import { ActivityHeatmap } from '@/components/dashboard/ActivityHeatmap';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { Button } from '@/components/ui/button';
@@ -76,7 +77,12 @@ function DashboardPage() {
     <div className="relative min-h-full overflow-x-hidden before:content-[''] before:fixed before:w-[600px] before:h-[600px] before:bg-blue-500 before:rounded-full before:-z-10 before:pointer-events-none before:opacity-[0.12] before:-top-[200px] before:-right-[150px] before:blur-[80px] after:content-[''] after:fixed after:w-[500px] after:h-[500px] after:bg-purple-500 after:rounded-full after:-z-10 after:pointer-events-none after:opacity-[0.12] after:-bottom-[150px] after:-left-[100px] after:blur-[80px]">
       <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
 
-      <div className="container mx-auto px-4 py-8 pb-24 md:pb-8 max-w-7xl">
+      {/* Mobile Week Calendar */}
+      <div className="md:hidden fixed top-16 left-0 right-0 z-30">
+        <MobileWeekCalendar tasks={tasks} />
+      </div>
+
+      <div className="container mx-auto px-4 py-8 pb-24 md:pb-8 max-w-7xl pt-36 md:pt-8">
         {/* Stats Cards */}
         <StatsCards tasks={tasks} isLoading={isLoading} />
 
@@ -173,7 +179,9 @@ function DashboardPage() {
               </div>
               <ActivityHeatmap tasks={tasks} />
             </div>
-            <MiniCalendar tasks={tasks} />
+            <div className="hidden md:block">
+              <MiniCalendar tasks={tasks} />
+            </div>
           </div>
         </div>
 
