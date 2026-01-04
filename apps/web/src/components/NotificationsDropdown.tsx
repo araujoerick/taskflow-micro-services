@@ -65,10 +65,10 @@ export function NotificationsDropdown() {
   return (
     <div className="relative" ref={dropdownRef}>
       <button
-        className="relative p-2 hover:bg-(--color-accent) rounded-md transition-colors"
+        className="relative p-2 hover:bg-(--color-accent) md:hover:bg-(--color-accent) rounded-md transition-colors"
         onClick={() => setIsOpen(!isOpen)}
       >
-        <Bell className="h-5 w-5" />
+        <Bell className="h-5 w-5 text-white md:text-current" />
         {unreadCount && unreadCount > 0 ? (
           <span className="absolute top-0 right-0 h-5 w-5 rounded-full bg-(--color-destructive) text-white text-xs flex items-center justify-center font-bold">
             {unreadCount > 9 ? '9+' : unreadCount}

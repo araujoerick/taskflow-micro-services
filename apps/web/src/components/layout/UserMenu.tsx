@@ -39,9 +39,9 @@ export function UserMenu() {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 p-1.5 rounded-full hover:bg-accent transition-colors"
+        className="flex items-center gap-2 p-1.5 rounded-full hover:bg-white/10 md:hover:bg-accent transition-colors"
       >
-        <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
+        <div className="h-8 w-8 rounded-full bg-white md:bg-primary text-(--organic-blue) md:text-primary-foreground flex items-center justify-center text-sm font-medium ring-2 ring-white/30 md:ring-0">
           {initials}
         </div>
       </button>
