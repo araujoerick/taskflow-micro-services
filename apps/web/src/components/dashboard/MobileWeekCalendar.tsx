@@ -90,7 +90,7 @@ export function MobileWeekCalendar({ tasks }: MobileWeekCalendarProps) {
           <div
             key={index}
             ref={dayInfo.isToday ? todayRef : null}
-            className={`flex flex-col items-center justify-center min-w-10 py-2 px-1 rounded-xl snap-center transition-all
+            className={`flex flex-col items-center justify-center min-w-10 py-2 px-1 rounded-xl snap-center transition-all mx-auto
               ${dayInfo.isToday ? 'bg-white text-blue-500' : 'text-white/90 hover:bg-white/10'}
             `}
           >
