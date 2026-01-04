@@ -174,7 +174,7 @@ function TasksPage() {
       <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
       <div className="container mx-auto px-4 pt-36 md:pt-8 py-8 pb-24 md:pb-8 max-w-7xl">
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_290px] xl:grid-cols-[1fr_320px] gap-6">
           {/* Main Content - Tasks */}
           <div className="flex flex-col gap-6 min-w-0">
             <TaskFilters filters={filters} onFiltersChange={handleFiltersChange} />
@@ -191,12 +191,10 @@ function TasksPage() {
           </div>
 
           {/* Sidebar - Clock, Calendar, Summary */}
-          <div className="flex flex-col gap-4 max-lg:grid max-lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
-            <div className="grid grid-cols-[1fr_auto] gap-4">
+          <div className="flex flex-col gap-4 max-md:grid max-lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
+            <div className="hidden md:grid grid-cols-[1fr_auto] gap-4">
               <DigitalClock />
-              <div className="hidden lg:grid">
-                <NewTaskButton onNewTask={() => setIsFormOpen(true)} />
-              </div>
+              <NewTaskButton onNewTask={() => setIsFormOpen(true)} />
             </div>
 
             <div className="hidden md:block">
