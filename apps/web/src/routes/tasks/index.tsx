@@ -20,6 +20,7 @@ import { TaskStatus as TaskStatusEnum, TaskPriority } from '@repo/types';
 import type { Task, TaskFilters as TaskFiltersType, TaskStatus } from '@repo/types';
 import type { CreateTaskInput } from '@/schemas/task.schema';
 import { NewTaskButton } from '@/components/NewTaskButton';
+import { useNewTaskModal } from '@/contexts/NewTaskModalContext';
 
 export const Route = createFileRoute('/tasks/')({
   beforeLoad: () => {
@@ -32,6 +33,8 @@ export const Route = createFileRoute('/tasks/')({
 });
 
 function TasksPage() {
+  const { isOpen: isFormOpen, setIsOpen: setIsFormOpen, openModal } = useNewTaskModal();
+
   const [filters, setFilters] = useState({
     search: '',
     status: 'all',
@@ -39,7 +42,6 @@ function TasksPage() {
   });
   const [page, setPage] = useState(1);
 
-  const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deletingTask, setDeletingTask] = useState<Task | null>(null);
 
@@ -54,7 +56,6 @@ function TasksPage() {
   };
 
   const { data, isLoading } = useTasks(queryFilters);
-  // Fetch all tasks for sidebar stats (without pagination filters)
   const { data: allTasksData } = useTasks({ limit: 1000 });
   const allTasks = useMemo(() => allTasksData?.data || [], [allTasksData?.data]);
 
@@ -111,7 +112,6 @@ function TasksPage() {
       toast.success('Tarefa atualizada com sucesso');
       setEditingTask(null);
     } catch (error) {
-      // Extrair mensagem de erro da API
       const axiosError = error as { response?: { data?: { message?: string }; status?: number } };
       if (axiosError.response?.status === 403) {
         toast.error('Apenas o criador pode editar esta tarefa');
@@ -130,7 +130,6 @@ function TasksPage() {
       toast.success('Tarefa excluída com sucesso');
       setDeletingTask(null);
     } catch (error) {
-      // Extrair mensagem de erro da API
       const axiosError = error as { response?: { data?: { message?: string }; status?: number } };
       if (axiosError.response?.status === 403) {
         toast.error('Apenas o criador pode excluir esta tarefa');
@@ -174,7 +173,7 @@ function TasksPage() {
       <div className="fixed w-[400px] h-[400px] bg-amber-500 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 blur-[100px] opacity-[0.06] -z-10 pointer-events-none" />
       <div className="container mx-auto px-4 pt-36 md:pt-8 py-8 pb-24 md:pb-8 max-w-7xl">
         {/* Two-column layout */}
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_290px] xl:grid-cols-[1fr_320px] gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] gap-6">
           {/* Main Content - Tasks */}
           <div className="flex flex-col gap-6 min-w-0">
             <TaskFilters filters={filters} onFiltersChange={handleFiltersChange} />
@@ -194,7 +193,7 @@ function TasksPage() {
           <div className="flex flex-col gap-4 max-md:grid max-lg:grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
             <div className="hidden md:grid grid-cols-[1fr_auto] gap-4">
               <DigitalClock />
-              <NewTaskButton onNewTask={() => setIsFormOpen(true)} />
+              <NewTaskButton onNewTask={openModal} />
             </div>
 
             <div className="hidden md:block">
