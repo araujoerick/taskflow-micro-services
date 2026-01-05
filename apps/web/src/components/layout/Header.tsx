@@ -62,7 +62,9 @@ export function Header() {
                 className="w-full h-full object-cover"
               />
             </div>
-            <span className="font-bold text-xl hidden sm:inline text-primary">TaskFlow</span>
+            <span className="font-bold text-xl hidden sm:inline text-white md:text-primary">
+              TaskFlow
+            </span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">
