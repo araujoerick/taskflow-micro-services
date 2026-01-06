@@ -210,6 +210,40 @@ Tasks Service → RabbitMQ → API Gateway → WebSocket → Cliente
 - ✅ Headers de autenticação propagados aos microserviços
 - ✅ WebSocket com autenticação JWT
 
+## Development
+
+### Running Tests
+
+```bash
+# Unit tests
+npm test
+
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:cov
+
+# E2E tests
+npm run test:e2e
+```
+
+### Logging
+
+The service uses NestJS Logger for structured logging:
+
+- **INFO**: Successful proxy requests, WebSocket connections
+- **WARN**: Rate limit warnings, connection issues
+- **ERROR**: Proxy errors, authentication failures
+
+Example logs:
+```
+[Bootstrap] API Gateway running on port 3000
+[ProxyService] Proxying POST /auth/login to http://localhost:3001
+[NotificationsGateway] Client connected: socket-id (user: abc-123)
+[NotificationsGateway] Client disconnected: socket-id
+```
+
 ## Monitoramento
 
 - Health check endpoint disponível em `/health`

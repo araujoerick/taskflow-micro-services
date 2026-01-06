@@ -283,17 +283,38 @@ src/
 4. **Indexing Strategy**: Optimized indexes for common queries (userId + read, userId + createdAt)
 5. **Pagination**: Configurable page size with sensible defaults
 
-## Testing
+## Development
+
+### Running Tests
 
 ```bash
 # Unit tests
 npm test
 
+# Watch mode
+npm run test:watch
+
+# Coverage
+npm run test:cov
+
 # E2E tests
 npm run test:e2e
+```
 
-# Test coverage
-npm run test:cov
+### Logging
+
+The service uses NestJS Logger for structured logging:
+
+- **INFO**: Successful operations (notification created, marked as read)
+- **WARN**: Event processing warnings
+- **ERROR**: RabbitMQ connection errors, processing failures
+
+Example logs:
+```
+[Bootstrap] Notifications service running on port 3003
+[RabbitMQService] Connected to RabbitMQ
+[RabbitMQService] Processing event: task.assigned
+[NotificationsService] Created notification for user abc-123
 ```
 
 ## Health Check
