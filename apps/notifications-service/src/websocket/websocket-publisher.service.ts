@@ -95,7 +95,7 @@ export class WebSocketPublisherService
     }
   }
 
-  async publishNotification(notification: Notification): Promise<void> {
+  publishNotification(notification: Notification): void {
     if (!this.isHealthy || !this.channel) {
       this.logger.warn(
         'Cannot publish WebSocket notification: RabbitMQ not connected',
@@ -126,9 +126,9 @@ export class WebSocketPublisherService
     }
   }
 
-  async publishNotifications(notifications: Notification[]): Promise<void> {
+  publishNotifications(notifications: Notification[]): void {
     for (const notification of notifications) {
-      await this.publishNotification(notification);
+      this.publishNotification(notification);
     }
   }
 
@@ -136,7 +136,7 @@ export class WebSocketPublisherService
    * Publish a task_changed event for cache invalidation across all users
    * without creating a notification record
    */
-  async publishTaskChanged(taskId: string, type: string): Promise<void> {
+  publishTaskChanged(taskId: string, type: string): void {
     if (!this.isHealthy || !this.channel) {
       this.logger.warn('Cannot publish task_changed: RabbitMQ not connected');
       return;
