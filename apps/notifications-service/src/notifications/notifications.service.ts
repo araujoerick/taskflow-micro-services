@@ -54,7 +54,7 @@ export class NotificationsService {
       `Created TASK_CREATED notification for assignee ${data.assignedToId}`,
     );
 
-    await this.webSocketPublisher.publishNotification(saved);
+    this.webSocketPublisher.publishNotification(saved);
 
     return saved;
   }
@@ -103,7 +103,7 @@ export class NotificationsService {
         const saved = await transactionalEntityManager.save(notifications);
         this.logger.log(`Created ${saved.length} TASK_UPDATED notifications`);
 
-        await this.webSocketPublisher.publishNotifications(saved);
+        this.webSocketPublisher.publishNotifications(saved);
 
         return saved;
       },
@@ -135,7 +135,7 @@ export class NotificationsService {
         `Created TASK_ASSIGNED notification for user ${data.assignedToId}`,
       );
 
-      await this.webSocketPublisher.publishNotification(saved);
+      this.webSocketPublisher.publishNotification(saved);
 
       return saved;
     }
@@ -210,7 +210,7 @@ export class NotificationsService {
         const saved = await transactionalEntityManager.save(notifications);
         this.logger.log(`Created ${saved.length} TASK_COMMENTED notifications`);
 
-        await this.webSocketPublisher.publishNotifications(saved);
+        this.webSocketPublisher.publishNotifications(saved);
 
         return saved;
       },
@@ -344,6 +344,6 @@ export class NotificationsService {
       `Marked ${result.affected || 0} notifications as obsolete for deleted task ${taskId}`,
     );
 
-    await this.webSocketPublisher.publishTaskChanged(taskId, 'TASK_DELETED');
+    this.webSocketPublisher.publishTaskChanged(taskId, 'TASK_DELETED');
   }
 }
