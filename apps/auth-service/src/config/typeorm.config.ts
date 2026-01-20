@@ -1,7 +1,11 @@
 import { DataSource } from 'typeorm';
 import { config } from 'dotenv';
+import { join } from 'path';
 
 config();
+
+const isProduction = process.env.NODE_ENV === 'production';
+const extension = isProduction ? '.js' : '.ts';
 
 export const AppDataSource = new DataSource({
   type: 'postgres',
@@ -10,8 +14,8 @@ export const AppDataSource = new DataSource({
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
   database: process.env.DB_DATABASE || 'auth_service',
-  entities: ['src/**/*.entity{.ts,.js}'],
-  migrations: ['src/migrations/*{.ts,.js}'],
+  entities: [join(__dirname, '..', '**', `*.entity${extension}`)],
+  migrations: [join(__dirname, '..', 'migrations', `*${extension}`)],
   synchronize: false,
   logging: process.env.NODE_ENV === 'development',
 });
