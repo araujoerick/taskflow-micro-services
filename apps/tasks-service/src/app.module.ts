@@ -11,6 +11,7 @@ import { AppService } from './app.service';
 import { TasksModule } from './tasks/tasks.module';
 import { CommentsModule } from './comments/comments.module';
 import { RabbitMQModule } from './rabbitmq/rabbitmq.module';
+import { HealthModule } from './health/health.module';
 import { JwtStrategy } from './auth/strategies/jwt.strategy';
 import { validate } from './config/env.validation';
 
@@ -50,7 +51,9 @@ import { validate } from './config/env.validation';
         const secret = configService.get<string>('JWT_SECRET');
 
         if (!secret) {
-          throw new Error('JWT_SECRET must be defined in environment variables');
+          throw new Error(
+            'JWT_SECRET must be defined in environment variables',
+          );
         }
 
         return {
@@ -62,6 +65,7 @@ import { validate } from './config/env.validation';
     TasksModule,
     CommentsModule,
     RabbitMQModule,
+    HealthModule,
   ],
   controllers: [AppController],
   providers: [
