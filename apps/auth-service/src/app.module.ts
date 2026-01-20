@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './auth/auth.module';
+import { HealthModule } from './health/health.module';
 import { User } from './users/entities/user.entity';
 import { validateEnv } from './config/env.validation';
 
@@ -28,6 +29,7 @@ import { validateEnv } from './config/env.validation';
       }),
     }),
     AuthModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
