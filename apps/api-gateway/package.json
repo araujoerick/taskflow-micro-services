@@ -49,8 +49,6 @@
     "@nestjs/cli": "^11.0.4",
     "@nestjs/schematics": "^11.0.6",
     "@nestjs/testing": "^11.1.9",
-    "@repo/eslint-config": "*",
-    "@repo/tsconfig": "*",
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.14",
     "@types/node": "^22.10.5",
