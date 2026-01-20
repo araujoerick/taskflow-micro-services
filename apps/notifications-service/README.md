@@ -1,6 +1,6 @@
 # Notifications Service
 
-Microservice responsible for managing user notifications in the Jungle Gaming task management system.
+Microservice responsible for managing user notifications in the Task Flow task management system.
 
 ## Features
 
@@ -25,17 +25,20 @@ The service handles four types of notifications:
 All endpoints require JWT authentication via `Authorization: Bearer <token>` header.
 
 ### Get User Notifications
+
 ```http
 GET /notifications?page=1&limit=20&type=TASK_ASSIGNED&read=false
 ```
 
 Query parameters:
+
 - `page` (optional): Page number (default: 1)
 - `limit` (optional): Items per page (default: 20)
 - `type` (optional): Filter by notification type
 - `read` (optional): Filter by read status (true/false)
 
 Response:
+
 ```json
 {
   "data": [
@@ -64,11 +67,13 @@ Response:
 ```
 
 ### Get Unread Count
+
 ```http
 GET /notifications/unread-count
 ```
 
 Response:
+
 ```json
 {
   "count": 5
@@ -76,11 +81,13 @@ Response:
 ```
 
 ### Get Single Notification
+
 ```http
 GET /notifications/:id
 ```
 
 ### Mark Notifications as Read
+
 ```http
 POST /notifications/mark-as-read
 Content-Type: application/json
@@ -91,6 +98,7 @@ Content-Type: application/json
 ```
 
 Response:
+
 ```json
 {
   "message": "2 notification(s) marked as read",
@@ -99,11 +107,13 @@ Response:
 ```
 
 ### Mark All as Read
+
 ```http
 POST /notifications/mark-all-as-read
 ```
 
 Response:
+
 ```json
 {
   "message": "5 notification(s) marked as read",
@@ -116,6 +126,7 @@ Response:
 The service consumes events from RabbitMQ and creates appropriate notifications:
 
 ### Task Created Event
+
 ```json
 {
   "event": "task.created",
@@ -131,6 +142,7 @@ The service consumes events from RabbitMQ and creates appropriate notifications:
 ```
 
 ### Task Updated Event
+
 ```json
 {
   "event": "task.updated",
@@ -147,6 +159,7 @@ The service consumes events from RabbitMQ and creates appropriate notifications:
 ```
 
 ### Task Assigned Event
+
 ```json
 {
   "event": "task.assigned",
@@ -163,6 +176,7 @@ The service consumes events from RabbitMQ and creates appropriate notifications:
 ```
 
 ### Task Commented Event
+
 ```json
 {
   "event": "task.commented",
@@ -220,11 +234,13 @@ npm run migration:run
 ## Running the Service
 
 ### Development
+
 ```bash
 npm run dev
 ```
 
 ### Production
+
 ```bash
 npm run build
 npm run start:prod
@@ -233,16 +249,19 @@ npm run start:prod
 ## Database Migrations
 
 ### Create a new migration
+
 ```bash
 npm run migration:generate src/migrations/MigrationName
 ```
 
 ### Run migrations
+
 ```bash
 npm run migration:run
 ```
 
 ### Revert last migration
+
 ```bash
 npm run migration:revert
 ```
@@ -310,6 +329,7 @@ The service uses NestJS Logger for structured logging:
 - **ERROR**: RabbitMQ connection errors, processing failures
 
 Example logs:
+
 ```
 [Bootstrap] Notifications service running on port 3003
 [RabbitMQService] Connected to RabbitMQ
@@ -326,6 +346,7 @@ GET /
 ```
 
 Response:
+
 ```json
 {
   "message": "Notifications service is running"
@@ -351,16 +372,19 @@ Response:
 ## Troubleshooting
 
 ### RabbitMQ Connection Issues
+
 - Verify RabbitMQ is running: `docker-compose ps`
 - Check credentials match environment variables
 - Ensure queue exists in RabbitMQ management UI (http://localhost:15672)
 
 ### Database Connection Issues
+
 - Verify PostgreSQL is running
 - Check database exists: `psql -U postgres -l`
 - Run migrations if tables are missing
 
 ### No Notifications Being Created
+
 - Check tasks-service is publishing events
 - Monitor RabbitMQ queue depth in management UI
 - Check logs for consumer errors: `npm run dev`
