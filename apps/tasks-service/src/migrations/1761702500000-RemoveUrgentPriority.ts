@@ -1,7 +1,7 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class RemoveUrgentPriority1735215600000 implements MigrationInterface {
-  name = 'RemoveUrgentPriority1735215600000';
+export class RemoveUrgentPriority1761702500000 implements MigrationInterface {
+  name = 'RemoveUrgentPriority1761702500000';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     // First, update any tasks with URGENT priority to HIGH
