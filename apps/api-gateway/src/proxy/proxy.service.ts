@@ -21,34 +21,30 @@ export class ProxyService {
     headers?: Record<string, string>,
     queryParams?: Record<string, unknown>,
   ): Promise<unknown> {
-    try {
-      const url = `${serviceUrl}${path}`;
-      const correlationId = this.request.headers[CORRELATION_ID_HEADER] as string;
+    const url = `${serviceUrl}${path}`;
+    const correlationId = this.request.headers[CORRELATION_ID_HEADER] as string;
 
-      const response$ = this.httpService.request({
-        method: method as any,
-        url,
-        headers: {
-          ...headers,
-          'Content-Type': 'application/json',
-          [CORRELATION_ID_HEADER]: correlationId,
-        },
-        data,
-        params: queryParams,
-        timeout: 30000, // 30 seconds
-      }) as any;
+    const response$ = this.httpService.request({
+      method: method as any,
+      url,
+      headers: {
+        ...headers,
+        'Content-Type': 'application/json',
+        [CORRELATION_ID_HEADER]: correlationId,
+      },
+      data,
+      params: queryParams,
+      timeout: 30000, // 30 seconds
+    }) as any;
 
-      const responseObservable = response$.pipe(
-        catchError((error: AxiosError) => {
-          throw this.handleProxyError(error);
-        }),
-      );
+    const responseObservable = response$.pipe(
+      catchError((error: AxiosError) => {
+        throw this.handleProxyError(error);
+      }),
+    );
 
-      const response = await firstValueFrom(responseObservable);
-      return (response as any).data;
-    } catch (error) {
-      throw error;
-    }
+    const response = await firstValueFrom(responseObservable);
+    return (response as any).data;
   }
 
   private handleProxyError(error: AxiosError): HttpException {
