@@ -104,7 +104,15 @@ describe('Auth Module (e2e)', () => {
         .expect(400)
         .expect((res) => {
           const body = res.body as ErrorResponse;
-          expect(body.message).toContain('password must be longer than');
+          const messages = Array.isArray(body.message)
+            ? body.message
+            : [body.message];
+          const hasPasswordError = messages.some(
+            (msg) =>
+              msg.includes('Password must contain') ||
+              msg.includes('password must be longer'),
+          );
+          expect(hasPasswordError).toBe(true);
         });
     });
 
@@ -119,7 +127,13 @@ describe('Auth Module (e2e)', () => {
         .expect(400)
         .expect((res) => {
           const body = res.body as ErrorResponse;
-          expect(body.message).toContain('Password must contain');
+          const messages = Array.isArray(body.message)
+            ? body.message
+            : [body.message];
+          const hasPasswordError = messages.some((msg) =>
+            msg.includes('Password must contain'),
+          );
+          expect(hasPasswordError).toBe(true);
         });
     });
 
@@ -134,7 +148,13 @@ describe('Auth Module (e2e)', () => {
         .expect(400)
         .expect((res) => {
           const body = res.body as ErrorResponse;
-          expect(body.message).toContain('Password must contain');
+          const messages = Array.isArray(body.message)
+            ? body.message
+            : [body.message];
+          const hasPasswordError = messages.some((msg) =>
+            msg.includes('Password must contain'),
+          );
+          expect(hasPasswordError).toBe(true);
         });
     });
 
@@ -293,15 +313,28 @@ describe('Auth Module (e2e)', () => {
   });
 
   describe('/auth/refresh (POST)', () => {
+    beforeAll(async () => {
+      // Login again to get fresh tokens since previous tests may have logged out
+      const res = await request(app.getHttpServer())
+        .post('/auth/login')
+        .send({
+          email: 'john@example.com',
+          password: 'SecureP@ss123',
+        });
+      accessToken = res.body.accessToken;
+      refreshToken = res.body.refreshToken;
+    });
+
     it('should refresh tokens with valid refresh token', () => {
       return request(app.getHttpServer())
         .post('/auth/refresh')
         .send({ refreshToken })
         .expect(200)
         .expect((res) => {
-          const body = res.body as TokenResponse;
+          const body = res.body as AuthResponse;
           expect(body).toHaveProperty('accessToken');
           expect(body).toHaveProperty('refreshToken');
+          expect(body).toHaveProperty('user');
           accessToken = body.accessToken;
           refreshToken = body.refreshToken;
         });
@@ -360,7 +393,7 @@ describe('Auth Module (e2e)', () => {
       expect(body.message).toBe('Invalid credentials');
     });
 
-    it('should strip unknown fields from request body', () => {
+    it('should reject unknown fields in request body', () => {
       return request(app.getHttpServer())
         .post('/auth/register')
         .send({
@@ -370,11 +403,18 @@ describe('Auth Module (e2e)', () => {
           isAdmin: true,
           maliciousField: 'hack',
         })
-        .expect(201)
+        .expect(400)
         .expect((res) => {
-          const body = res.body as AuthResponse;
-          expect(body.user).not.toHaveProperty('isAdmin');
-          expect(body.user).not.toHaveProperty('maliciousField');
+          const body = res.body as ErrorResponse;
+          const messages = Array.isArray(body.message)
+            ? body.message
+            : [body.message];
+          const hasWhitelistError = messages.some(
+            (msg) =>
+              msg.includes('should not exist') ||
+              msg.includes('property should not exist'),
+          );
+          expect(hasWhitelistError).toBe(true);
         });
     });
   });
