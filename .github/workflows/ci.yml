@@ -148,6 +148,7 @@ jobs:
         run: npm run test:e2e
         env:
           NODE_ENV: test
+          PORT: 3001
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USERNAME: postgres
@@ -161,6 +162,7 @@ jobs:
         run: npm run test:e2e
         env:
           NODE_ENV: test
+          PORT: 3002
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USERNAME: postgres
@@ -175,6 +177,7 @@ jobs:
         run: npm run test:e2e
         env:
           NODE_ENV: test
+          PORT: 3003
           DB_HOST: localhost
           DB_PORT: 5432
           DB_USERNAME: postgres
@@ -189,6 +192,7 @@ jobs:
         run: npm run test:e2e
         env:
           NODE_ENV: test
+          PORT: 3000
           JWT_SECRET: test-jwt-secret-for-ci-pipeline-min-32-chars
           AUTH_SERVICE_URL: http://localhost:3001
           TASKS_SERVICE_URL: http://localhost:3002
