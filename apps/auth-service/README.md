@@ -252,7 +252,7 @@ apps/auth-service/
 | NODE_ENV | No | development | Environment (development, production, test) |
 | PORT | No | 3001 | Service port |
 | DB_HOST | Yes | - | Database host |
-| DB_PORT | No | 5432 | Database port |
+| DB_PORT | No | 5433 | Database port |
 | DB_USERNAME | Yes | - | Database username |
 | DB_PASSWORD | Yes | - | Database password |
 | DB_DATABASE | Yes | - | Database name |

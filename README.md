@@ -191,7 +191,7 @@ taskflow/
    ```bash
    # Database
    DATABASE_HOST=localhost
-   DATABASE_PORT=5432
+   DATABASE_PORT=5433
    DATABASE_USERNAME=postgres
    DATABASE_PASSWORD=postgres
 
@@ -202,7 +202,7 @@ taskflow/
 
    # RabbitMQ
    RABBITMQ_HOST=localhost
-   RABBITMQ_PORT=5672
+   RABBITMQ_PORT=5673
    RABBITMQ_USER=rabbitmq
    RABBITMQ_PASSWORD=rabbitmq
    ```
@@ -239,7 +239,7 @@ taskflow/
 | Web App             | http://localhost:5173     | Frontend application |
 | API Gateway         | http://localhost:3000     | API entry point      |
 | Swagger Docs        | http://localhost:3000/api | API documentation    |
-| RabbitMQ Management | http://localhost:15672    | Message broker UI    |
+| RabbitMQ Management | http://localhost:15673    | Message broker UI    |
 
 ## API Documentation
 
@@ -428,7 +428,7 @@ docker-compose restart postgres
 docker-compose logs rabbitmq
 
 # Access management UI
-open http://localhost:15672
+open http://localhost:15673
 # Login: rabbitmq / rabbitmq
 ```
 
@@ -441,8 +441,8 @@ Ensure these ports are available:
 - 3002 (Tasks Service)
 - 3003 (Notifications Service)
 - 5173 (Web Frontend)
-- 5432 (PostgreSQL)
-- 5672, 15672 (RabbitMQ)
+- 5433 (PostgreSQL)
+- 5673, 15673 (RabbitMQ)
 
 ## Deployment
 

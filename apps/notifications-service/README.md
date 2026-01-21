@@ -203,7 +203,7 @@ PORT=3003
 
 # Database
 DB_HOST=localhost
-DB_PORT=5432
+DB_PORT=5433
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
 DB_DATABASE=notifications_service
@@ -212,7 +212,7 @@ DB_DATABASE=notifications_service
 JWT_SECRET=your-super-secret-jwt-key-change-this-in-production
 
 # RabbitMQ
-RABBITMQ_URL=amqp://rabbitmq:rabbitmq@localhost:5672
+RABBITMQ_URL=amqp://rabbitmq:rabbitmq@localhost:5673
 RABBITMQ_QUEUE=task-events
 ```
 
@@ -375,7 +375,7 @@ Response:
 
 - Verify RabbitMQ is running: `docker-compose ps`
 - Check credentials match environment variables
-- Ensure queue exists in RabbitMQ management UI (http://localhost:15672)
+- Ensure queue exists in RabbitMQ management UI (http://localhost:15673)
 
 ### Database Connection Issues
 
