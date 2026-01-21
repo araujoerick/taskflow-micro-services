@@ -1,19 +1,19 @@
 version: '3.8'
 
 services:
-  # PostgreSQL Database
+  # PostgreSQL Database (Development)
   postgres:
     image: postgres:16-alpine
-    container_name: taskflow-postgres
+    container_name: taskflow-postgres-dev
     restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: postgres
     ports:
-      - '5432:5432'
+      - '5433:5432'
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_data_dev:/var/lib/postgresql/data
       - ./docker/init-databases.sql:/docker-entrypoint-initdb.d/init-databases.sql
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
@@ -21,35 +21,35 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - taskflow-network
+      - taskflow-network-dev
 
-  # RabbitMQ Message Broker
+  # RabbitMQ Message Broker (Development)
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
-    container_name: taskflow-rabbitmq
+    container_name: taskflow-rabbitmq-dev
     restart: unless-stopped
     environment:
       RABBITMQ_DEFAULT_USER: rabbitmq
       RABBITMQ_DEFAULT_PASS: rabbitmq
     ports:
-      - '5672:5672'   # AMQP protocol
-      - '15672:15672' # Management UI
+      - '5673:5672'   # AMQP protocol
+      - '15673:15672' # Management UI
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
+      - rabbitmq_data_dev:/var/lib/rabbitmq
     healthcheck:
       test: ['CMD', 'rabbitmq-diagnostics', 'ping']
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - taskflow-network
+      - taskflow-network-dev
 
 volumes:
-  postgres_data:
+  postgres_data_dev:
     driver: local
-  rabbitmq_data:
+  rabbitmq_data_dev:
     driver: local
 
 networks:
-  taskflow-network:
+  taskflow-network-dev:
     driver: bridge
