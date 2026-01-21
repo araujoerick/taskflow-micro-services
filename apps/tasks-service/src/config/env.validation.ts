@@ -48,7 +48,9 @@ export class EnvironmentVariables {
 
   // RabbitMQ
   @IsString()
-  @Matches(/^amqps?:\/\//, { message: 'RABBITMQ_URL must be a valid AMQP URL (amqp:// or amqps://)' })
+  @Matches(/^amqps?:\/\//, {
+    message: 'RABBITMQ_URL must be a valid AMQP URL (amqp:// or amqps://)',
+  })
   RABBITMQ_URL: string;
 
   @IsString()

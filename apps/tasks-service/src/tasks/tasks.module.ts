@@ -7,10 +7,7 @@ import { TaskHistory } from '../history/entities/task-history.entity';
 import { RabbitMQModule } from '../rabbitmq/rabbitmq.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([Task, TaskHistory]),
-    RabbitMQModule,
-  ],
+  imports: [TypeOrmModule.forFeature([Task, TaskHistory]), RabbitMQModule],
   controllers: [TasksController],
   providers: [TasksService],
   exports: [TasksService],

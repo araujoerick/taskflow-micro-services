@@ -1,4 +1,11 @@
-import { IsString, IsOptional, IsEnum, IsUUID, IsDateString, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsUUID,
+  IsDateString,
+  MaxLength,
+} from 'class-validator';
 import { TaskStatus, TaskPriority } from '../entities/task.entity';
 
 export class UpdateTaskDto {
