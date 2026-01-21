@@ -15,11 +15,6 @@ interface AuthResponse {
   refreshToken: string;
 }
 
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-}
-
 interface ValidateResponse {
   valid: boolean;
   user: {
@@ -315,14 +310,13 @@ describe('Auth Module (e2e)', () => {
   describe('/auth/refresh (POST)', () => {
     beforeAll(async () => {
       // Login again to get fresh tokens since previous tests may have logged out
-      const res = await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({
-          email: 'john@example.com',
-          password: 'SecureP@ss123',
-        });
-      accessToken = res.body.accessToken;
-      refreshToken = res.body.refreshToken;
+      const res = await request(app.getHttpServer()).post('/auth/login').send({
+        email: 'john@example.com',
+        password: 'SecureP@ss123',
+      });
+      const body = res.body as AuthResponse;
+      accessToken = body.accessToken;
+      refreshToken = body.refreshToken;
     });
 
     it('should refresh tokens with valid refresh token', () => {
