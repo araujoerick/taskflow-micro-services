@@ -63,7 +63,7 @@ export class CommentsService {
 
     const previousCommenterIds = previousCommenters.map((c) => c.userId);
 
-    await this.rabbitmqService.publishEvent(
+    this.rabbitmqService.publishEvent(
       TaskEvent.TASK_COMMENTED,
       taskId,
       userId,

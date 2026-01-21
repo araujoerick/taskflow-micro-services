@@ -76,11 +76,11 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     } catch (error) {
       this.logger.error('Failed to connect to RabbitMQ', error);
       this.isHealthy = false;
-      await this.reconnect();
+      this.reconnect();
     }
   }
 
-  private async reconnect(): Promise<void> {
+  private reconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
       this.logger.error('Max reconnection attempts reached. Service degraded.');
       return;
@@ -114,12 +114,12 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  async publishEvent(
+  publishEvent(
     event: TaskEvent,
     taskId: string,
     userId: string,
     data: unknown,
-  ): Promise<void> {
+  ): void {
     if (!this.isHealthy || !this.channel) {
       this.logger.error(`Cannot publish event ${event}: RabbitMQ not healthy`);
       return;

@@ -1,4 +1,11 @@
-import { IsOptional, IsEnum, IsUUID, IsString, IsInt, Min } from 'class-validator';
+import {
+  IsOptional,
+  IsEnum,
+  IsUUID,
+  IsString,
+  IsInt,
+  Min,
+} from 'class-validator';
 import { Type, Transform } from 'class-transformer';
 import { TaskStatus, TaskPriority } from '../entities/task.entity';
 
@@ -33,6 +40,8 @@ export class FilterTaskDto {
 
   @IsOptional()
   @IsString()
-  @Transform(({ value }) => (typeof value === 'string' ? value.trim().toLowerCase() : value))
+  @Transform(({ value }: { value: unknown }) =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
   search?: string;
 }

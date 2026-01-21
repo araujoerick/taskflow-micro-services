@@ -9,7 +9,9 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3000'],
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+    ],
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -31,4 +33,4 @@ async function bootstrap() {
   await app.listen(port);
   logger.log(`Tasks service is running on port ${port}`);
 }
-bootstrap();
+void bootstrap();

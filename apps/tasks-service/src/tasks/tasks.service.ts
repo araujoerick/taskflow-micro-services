@@ -45,7 +45,7 @@ export class TasksService {
       task: savedTask,
     });
 
-    await this.rabbitmqService.publishEvent(
+    this.rabbitmqService.publishEvent(
       TaskEvent.TASK_CREATED,
       savedTask.id,
       userId,
@@ -210,7 +210,7 @@ export class TasksService {
       event = TaskEvent.TASK_ASSIGNED;
     }
 
-    await this.rabbitmqService.publishEvent(event, id, userId, {
+    this.rabbitmqService.publishEvent(event, id, userId, {
       title: updatedTask.title,
       description: updatedTask.description,
       status: updatedTask.status,
@@ -235,22 +235,17 @@ export class TasksService {
 
     this.logger.log(`Task ${id} deleted successfully`);
 
-    await this.rabbitmqService.publishEvent(
-      TaskEvent.TASK_DELETED,
-      id,
-      userId,
-      {
-        title: task.title,
-        createdById: task.createdBy,
-        assignedToId: task.assignedTo,
-      },
-    );
+    this.rabbitmqService.publishEvent(TaskEvent.TASK_DELETED, id, userId, {
+      title: task.title,
+      createdById: task.createdBy,
+      assignedToId: task.assignedTo,
+    });
 
     return { message: 'Task deleted successfully' };
   }
 
   async getHistory(taskId: string) {
-    const task = await this.findOne(taskId);
+    await this.findOne(taskId);
 
     const history = await this.historyRepository.find({
       where: { taskId },
