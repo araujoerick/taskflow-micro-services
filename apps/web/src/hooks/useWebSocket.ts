@@ -10,6 +10,14 @@ interface TaskChangedEvent {
   type: string;
 }
 
+const getSocketUrl = (): string => {
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl) {
+    return apiUrl.replace(/\/$/, '');
+  }
+  return window.location.origin;
+};
+
 export function useWebSocket(accessToken: string | null) {
   const socketRef = useRef<Socket | null>(null);
   const queryClient = useQueryClient();
@@ -57,8 +65,10 @@ export function useWebSocket(accessToken: string | null) {
       return;
     }
 
-    // Create socket connection
-    const socket = io('/notifications', {
+    // Create socket connection with full API URL and namespace
+    const socketUrl = `${getSocketUrl()}/notifications`;
+    console.log('Connecting to WebSocket at:', socketUrl);
+    const socket = io(socketUrl, {
       auth: { token: accessToken },
       transports: ['websocket', 'polling'],
       reconnection: true,
