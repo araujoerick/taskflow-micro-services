@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createFileRoute, redirect } from '@tanstack/react-router';
-import { BarChart3 } from 'lucide-react';
+import { BarChart3, LayoutGrid, Columns3 } from 'lucide-react';
 import { toast } from 'sonner';
 import { TaskFilters } from '@/components/tasks/TaskFilters';
 import { TaskList } from '@/components/tasks/TaskList';
+import { KanbanBoard } from '@/components/tasks/KanbanBoard';
 import { TaskForm } from '@/components/tasks/TaskForm';
 import { DeleteTaskDialog } from '@/components/tasks/DeleteTaskDialog';
 import { DigitalClock } from '@/components/dashboard/DigitalClock';
@@ -32,8 +33,19 @@ export const Route = createFileRoute('/tasks/')({
   component: TasksPage,
 });
 
+type ViewMode = 'grid' | 'kanban';
+
 function TasksPage() {
   const { isOpen: isFormOpen, setIsOpen: setIsFormOpen, openModal } = useNewTaskModal();
+
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem('taskViewMode');
+    return (saved as ViewMode) || 'grid';
+  });
+
+  useEffect(() => {
+    localStorage.setItem('taskViewMode', viewMode);
+  }, [viewMode]);
 
   const [filters, setFilters] = useState({
     search: '',
@@ -176,17 +188,56 @@ function TasksPage() {
         <div className="grid grid-cols-1 md:grid-cols-[1fr_300px] xl:grid-cols-[1fr_320px] gap-6">
           {/* Main Content - Tasks */}
           <div className="flex flex-col gap-6 min-w-0">
-            <TaskFilters filters={filters} onFiltersChange={handleFiltersChange} />
+            {/* Filters + View Toggle */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <TaskFilters filters={filters} onFiltersChange={handleFiltersChange} />
+              </div>
 
-            <TaskList
-              data={data}
-              isLoading={isLoading}
-              page={page}
-              onPageChange={setPage}
-              onEdit={handleEdit}
-              onDelete={handleDelete}
-              onStatusChange={handleStatusChange}
-            />
+              {/* View Mode Toggle */}
+              <div className="flex items-center gap-1 bg-white dark:bg-card rounded-xl p-1 shadow-sm border border-black/5 dark:border-border self-start">
+                <button
+                  onClick={() => setViewMode('grid')}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    viewMode === 'grid'
+                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                  <span className="hidden sm:inline">Grid</span>
+                </button>
+                <button
+                  onClick={() => setViewMode('kanban')}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                    viewMode === 'kanban'
+                      ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300'
+                      : 'text-muted-foreground hover:text-foreground hover:bg-gray-100 dark:hover:bg-gray-800'
+                  }`}
+                >
+                  <Columns3 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Kanban</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Task Views */}
+            {viewMode === 'grid' ? (
+              <TaskList
+                data={data}
+                isLoading={isLoading}
+                page={page}
+                onPageChange={setPage}
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                onStatusChange={handleStatusChange}
+              />
+            ) : (
+              <KanbanBoard
+                tasks={allTasks}
+                onStatusChange={handleStatusChange}
+              />
+            )}
           </div>
 
           {/* Sidebar - Clock, Calendar, Summary */}
