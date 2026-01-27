@@ -85,7 +85,7 @@ export class RabbitMQService implements OnModuleInit, OnModuleDestroy {
       const content = msg.content.toString();
       const notification: NotificationPayload = JSON.parse(content);
 
-      this.logger.debug(`Received notification: ${JSON.stringify(notification)}`);
+      this.logger.log(`Received notification from RabbitMQ for user ${notification.userId}`);
 
       // Notify all registered handlers
       this.messageHandlers.forEach((handler) => {
