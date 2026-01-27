@@ -55,8 +55,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       try {
         const userData = await authService.getCurrentUser();
+        console.log('[AuthContext] User data from API:', userData);
         setUser(userData);
-      } catch {
+      } catch (error) {
+        console.error('[AuthContext] Failed to get current user:', error);
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
       } finally {
