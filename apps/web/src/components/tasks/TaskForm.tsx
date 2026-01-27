@@ -212,7 +212,13 @@ export function TaskForm({ open, onOpenChange, task, onSubmit, isLoading }: Task
   const assignedToId = watch('assignedToId') || '';
 
   const handleFormSubmit = async (data: CreateTaskInput) => {
-    await onSubmit(data);
+    const processedData = {
+      ...data,
+      dueDate: data.dueDate
+        ? new Date(data.dueDate + 'T12:00:00.000Z').toISOString()
+        : data.dueDate,
+    };
+    await onSubmit(processedData);
     reset();
     onOpenChange(false);
   };
