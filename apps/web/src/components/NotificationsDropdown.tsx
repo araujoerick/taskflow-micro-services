@@ -113,7 +113,7 @@ export function NotificationsDropdown() {
                     <div
                       key={notification.id}
                       className={`
-                        border-b last:border-b-0 p-4 hover:bg-(--color-accent) overflow-hidden cursor-pointer transition-colors
+                        border-b last:border-b-0 last:rounded-b-md p-4 hover:bg-(--color-accent) cursor-pointer transition-colors
                         ${!notification.read ? 'bg-(--color-secondary)' : ''}
                       `}
                       onClick={() => handleNotificationClick(notification)}
