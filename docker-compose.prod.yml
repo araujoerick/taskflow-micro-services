@@ -128,6 +128,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - RABBITMQ_URL=amqp://${RABBITMQ_USER}:${RABBITMQ_PASSWORD}@rabbitmq:5672
       - RABBITMQ_QUEUE=${RABBITMQ_QUEUE:-task-events}
+      - RABBITMQ_WEBSOCKET_QUEUE=notifications
     depends_on:
       postgres:
         condition: service_healthy
