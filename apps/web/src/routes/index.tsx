@@ -53,7 +53,7 @@ function DashboardPage() {
   const recentTasks = useMemo(() => {
     return [...tasks]
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
-      .slice(0, 5);
+      .slice(0, 7);
   }, [tasks]);
 
   const handleCreateTask = async (data: CreateTaskInput) => {
@@ -114,7 +114,7 @@ function DashboardPage() {
 
               {isLoading ? (
                 <div className="space-y-3">
-                  {[1, 2, 3, 4, 5].map((i) => (
+                  {[1, 2, 3, 4, 5, 6, 7].map((i) => (
                     <div
                       key={i}
                       className="bg-white dark:bg-card rounded-2xl py-3.5 px-4 shadow-[0_2px_15px_rgba(0,0,0,0.04)] border border-black/3 dark:border-border flex items-center justify-between gap-4"

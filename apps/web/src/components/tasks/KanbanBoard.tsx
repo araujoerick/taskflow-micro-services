@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useOptimistic, useId, startTransition } from 'react';
 import {
   DndContext,
   DragOverlay,
@@ -22,10 +22,11 @@ import { KanbanTaskCard } from './KanbanTaskCard';
 interface KanbanBoardProps {
   tasks: Task[];
   onStatusChange: (task: Task, status: TaskStatusType) => void;
+  onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
 }
 
-// Optimistic status overrides (taskId -> new status)
-type OptimisticUpdates = Map<string, TaskStatusType>;
+type OptimisticAction = { taskId: string; newStatus: TaskStatusType };
 
 const columns: { id: TaskStatus; title: string; color: 'amber' | 'purple' | 'green' }[] = [
   { id: TaskStatus.TODO, title: taskStatusLabels[TaskStatus.TODO], color: 'amber' },
@@ -33,25 +34,15 @@ const columns: { id: TaskStatus; title: string; color: 'amber' | 'purple' | 'gre
   { id: TaskStatus.DONE, title: taskStatusLabels[TaskStatus.DONE], color: 'green' },
 ];
 
-export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
+export function KanbanBoard({ tasks, onStatusChange, onEdit, onDelete }: KanbanBoardProps) {
   const [activeTask, setActiveTask] = useState<Task | null>(null);
-  const [optimisticUpdates, setOptimisticUpdates] = useState<OptimisticUpdates>(new Map());
+  const dndContextId = useId();
 
-  // Sync optimistic updates when tasks change (after API response)
-  useEffect(() => {
-    // Clear optimistic updates for tasks that have been updated
-    setOptimisticUpdates((prev) => {
-      const next = new Map(prev);
-      for (const [taskId, optimisticStatus] of prev) {
-        const task = tasks.find((t) => t.id === taskId);
-        // If the task's actual status matches the optimistic status, remove the override
-        if (task && task.status === optimisticStatus) {
-          next.delete(taskId);
-        }
-      }
-      return next.size !== prev.size ? next : prev;
-    });
-  }, [tasks]);
+  const [optimisticTasks, addOptimisticUpdate] = useOptimistic(
+    tasks,
+    (currentTasks, { taskId, newStatus }: OptimisticAction) =>
+      currentTasks.map((task) => (task.id === taskId ? { ...task, status: newStatus } : task)),
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -59,7 +50,7 @@ export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
     }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
-    })
+    }),
   );
 
   // Get unique user IDs from tasks
@@ -87,7 +78,6 @@ export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
     return map;
   }, [users]);
 
-  // Group tasks by status (with optimistic updates applied)
   const tasksByStatus = useMemo(() => {
     const grouped: Record<TaskStatus, Task[]> = {
       [TaskStatus.TODO]: [],
@@ -95,18 +85,16 @@ export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
       [TaskStatus.DONE]: [],
     };
 
-    tasks.forEach((task) => {
-      // Use optimistic status if available, otherwise use actual status
-      const effectiveStatus = optimisticUpdates.get(task.id) || task.status;
-      grouped[effectiveStatus].push(task);
+    optimisticTasks.forEach((task) => {
+      grouped[task.status].push(task);
     });
 
     return grouped;
-  }, [tasks, optimisticUpdates]);
+  }, [optimisticTasks]);
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
-    const task = tasks.find((t) => t.id === active.id);
+    const task = optimisticTasks.find((t) => t.id === active.id);
     if (task) {
       setActiveTask(task);
     }
@@ -119,7 +107,7 @@ export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
     if (!over) return;
 
     const activeTaskId = active.id as string;
-    const task = tasks.find((t) => t.id === activeTaskId);
+    const task = optimisticTasks.find((t) => t.id === activeTaskId);
     if (!task) return;
 
     // Determine the target status
@@ -139,14 +127,11 @@ export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
       targetStatus = over.id as TaskStatusType;
     }
 
-    // Check effective status (considering optimistic updates)
-    const effectiveStatus = optimisticUpdates.get(task.id) || task.status;
-
-    if (targetStatus && targetStatus !== effectiveStatus) {
-      // Apply optimistic update immediately
-      setOptimisticUpdates((prev) => new Map(prev).set(task.id, targetStatus));
-      // Call API in background
-      onStatusChange(task, targetStatus);
+    if (targetStatus && targetStatus !== task.status) {
+      startTransition(() => {
+        addOptimisticUpdate({ taskId: task.id, newStatus: targetStatus });
+        onStatusChange(task, targetStatus);
+      });
     }
   };
 
@@ -157,12 +142,13 @@ export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
 
   return (
     <DndContext
+      id={dndContextId}
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
+      <div className="-mx-2 p-2 flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory md:snap-none scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-700">
         {columns.map((column) => (
           <KanbanColumn
             key={column.id}
@@ -171,6 +157,8 @@ export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
             color={column.color}
             tasks={tasksByStatus[column.id]}
             usersMap={usersMap}
+            onEdit={onEdit}
+            onDelete={onDelete}
           />
         ))}
       </div>
@@ -182,6 +170,8 @@ export function KanbanBoard({ tasks, onStatusChange }: KanbanBoardProps) {
               task={activeTask}
               assigneeName={getUserName(activeTask.assignedTo)}
               isDragging
+              onEdit={onEdit}
+              onDelete={onDelete}
             />
           </div>
         )}

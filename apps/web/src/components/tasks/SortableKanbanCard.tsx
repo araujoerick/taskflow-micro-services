@@ -6,9 +6,16 @@ import { KanbanTaskCard } from './KanbanTaskCard';
 interface SortableKanbanCardProps {
   task: Task;
   assigneeName?: string;
+  onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
 }
 
-export function SortableKanbanCard({ task, assigneeName }: SortableKanbanCardProps) {
+export function SortableKanbanCard({
+  task,
+  assigneeName,
+  onEdit,
+  onDelete,
+}: SortableKanbanCardProps) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: task.id,
     data: {
@@ -30,7 +37,13 @@ export function SortableKanbanCard({ task, assigneeName }: SortableKanbanCardPro
       {...listeners}
       className="cursor-grab active:cursor-grabbing"
     >
-      <KanbanTaskCard task={task} assigneeName={assigneeName} isDragging={isDragging} />
+      <KanbanTaskCard
+        task={task}
+        assigneeName={assigneeName}
+        isDragging={isDragging}
+        onEdit={onEdit}
+        onDelete={onDelete}
+      />
     </div>
   );
 }

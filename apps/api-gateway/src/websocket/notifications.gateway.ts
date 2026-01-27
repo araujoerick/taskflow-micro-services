@@ -108,10 +108,10 @@ export class NotificationsGateway
     if (socketIds && socketIds.size > 0) {
       socketIds.forEach((socketId) => {
         this.server.to(socketId).emit('notification', data);
-        this.logger.debug(`Sent notification to user ${userId} (socket: ${socketId})`);
+        this.logger.log(`Sent notification to user ${userId} (socket: ${socketId})`);
       });
     } else {
-      this.logger.debug(`No active connections for user ${userId}`);
+      this.logger.warn(`No active WebSocket connections for user ${userId}`);
     }
 
     // Broadcast task_changed event to all connected users for cache invalidation
@@ -120,7 +120,7 @@ export class NotificationsGateway
         taskId: notification.taskId,
         type: notification.type,
       });
-      this.logger.debug(`Broadcast task_changed for task ${notification.taskId}`);
+      this.logger.log(`Broadcast task_changed for task ${notification.taskId}`);
     }
   }
 
