@@ -45,13 +45,15 @@ export class AuthController {
   @Get('validate')
   @UseGuards(JwtAuthGuard)
   validate(@Req() req: RequestWithUser) {
+    const userData = {
+      id: req.user.id,
+      name: req.user.name,
+      email: req.user.email,
+    };
+    console.log('[AuthController] Validate response:', userData);
     return {
       valid: true,
-      user: {
-        id: req.user.id,
-        name: req.user.name,
-        email: req.user.email,
-      },
+      user: userData,
     };
   }
 
