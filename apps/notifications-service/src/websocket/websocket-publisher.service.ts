@@ -115,6 +115,12 @@ export class WebSocketPublisherService
         createdAt: notification.createdAt,
       };
 
+      if (!payload.userId) {
+        this.logger.error(
+          `CRITICAL: Attempting to publish notification with undefined userId! Notification: ${JSON.stringify(notification)}`,
+        );
+      }
+
       const message = Buffer.from(JSON.stringify(payload));
       this.channel.sendToQueue(this.queueName, message, { persistent: true });
 
