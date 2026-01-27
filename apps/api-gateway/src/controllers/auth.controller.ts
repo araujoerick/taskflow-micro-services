@@ -85,14 +85,15 @@ export class AuthController {
   @ApiOperation({ summary: 'Validate JWT token' })
   @ApiResponse({ status: 200, description: 'Token is valid' })
   @ApiResponse({ status: 401, description: 'Invalid token' })
-  async validate(@User() user: ValidatedUser): Promise<unknown> {
-    return {
-      valid: true,
-      user: {
-        id: user.userId,
-        email: user.email,
-      },
-    };
+  async validate(@Headers('authorization') authHeader?: string): Promise<unknown> {
+    const headers = authHeader ? { authorization: authHeader } : undefined;
+    return this.proxyService.proxyRequest(
+      this.authServiceUrl,
+      '/auth/validate',
+      'GET',
+      undefined,
+      headers,
+    );
   }
 
   @UseGuards(JwtAuthGuard)
