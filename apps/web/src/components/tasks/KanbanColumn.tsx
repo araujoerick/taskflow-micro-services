@@ -10,6 +10,8 @@ interface KanbanColumnProps {
   tasks: Task[];
   color: 'amber' | 'purple' | 'green';
   usersMap: Map<string, UserBasicInfo>;
+  onEdit: (task: Task) => void;
+  onDelete: (task: Task) => void;
 }
 
 const columnColors = {
@@ -17,20 +19,31 @@ const columnColors = {
     header: 'bg-amber-100 dark:bg-amber-500/20 text-amber-800 dark:text-amber-400',
     border: 'border-amber-200 dark:border-amber-500/30',
     dot: 'bg-amber-500',
+    ring: 'ring-amber-200',
   },
   purple: {
     header: 'bg-purple-100 dark:bg-purple-500/20 text-purple-800 dark:text-purple-400',
     border: 'border-purple-200 dark:border-purple-500/30',
     dot: 'bg-purple-500',
+    ring: 'ring-purple-200',
   },
   green: {
     header: 'bg-green-100 dark:bg-green-500/20 text-green-800 dark:text-green-400',
     border: 'border-green-200 dark:border-green-500/30',
     dot: 'bg-green-500',
+    ring: 'ring-green-200',
   },
 };
 
-export function KanbanColumn({ id, title, tasks, color, usersMap }: KanbanColumnProps) {
+export function KanbanColumn({
+  id,
+  title,
+  tasks,
+  color,
+  usersMap,
+  onEdit,
+  onDelete,
+}: KanbanColumnProps) {
   const { setNodeRef, isOver } = useDroppable({
     id,
     data: {
@@ -50,7 +63,7 @@ export function KanbanColumn({ id, title, tasks, color, usersMap }: KanbanColumn
   return (
     <div
       className={`flex flex-col min-w-[280px] md:min-w-0 md:flex-1 rounded-2xl border ${colors.border} bg-gray-50/50 dark:bg-gray-900/20 transition-colors ${
-        isOver ? 'ring-2 ring-purple-400 ring-offset-2 dark:ring-offset-gray-900' : ''
+        isOver ? `ring-2 ${colors.ring} dark:ring-offset-gray-900` : ''
       }`}
     >
       {/* Header */}
@@ -73,6 +86,8 @@ export function KanbanColumn({ id, title, tasks, color, usersMap }: KanbanColumn
               key={task.id}
               task={task}
               assigneeName={getUserName(task.assignedTo)}
+              onEdit={onEdit}
+              onDelete={onDelete}
             />
           ))}
         </SortableContext>
