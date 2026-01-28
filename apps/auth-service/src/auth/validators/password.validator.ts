@@ -9,15 +9,12 @@ import {
 export class IsStrongPasswordConstraint
   implements ValidatorConstraintInterface
 {
-  validate(password: string) {
-    // Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char
-    const regex =
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
-    return regex.test(password);
+  validate(password: string): boolean {
+    return Boolean(password && password.length >= 8);
   }
 
   defaultMessage() {
-    return 'Password must contain at least 8 characters, 1 uppercase, 1 lowercase, 1 number, and 1 special character';
+    return 'Password must contain at least 8 characters';
   }
 }
 

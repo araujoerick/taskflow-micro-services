@@ -101,10 +101,7 @@ export function RegisterForm() {
             {errors.password && (
               <p className="text-sm text-destructive">{errors.password.message}</p>
             )}
-            <p className="text-xs text-muted-foreground">
-              Deve ter pelo menos 8 caracteres com maiúsculas, minúsculas, número e caractere
-              especial.
-            </p>
+            <p className="text-xs text-muted-foreground">Deve ter pelo menos 8 caracteres.</p>
           </div>
 
           <div className="space-y-2">
