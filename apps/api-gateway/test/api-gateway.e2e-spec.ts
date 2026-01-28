@@ -107,7 +107,17 @@ describe('API Gateway (e2e)', () => {
   });
 
   describe('GET /auth/validate', () => {
-    it('should validate authenticated user', () => {
+    it('should validate authenticated user', async () => {
+      const mockResponse: AxiosResponse = {
+        data: { valid: true, user: { id: mockUserId, email: mockEmail } },
+        status: 200,
+        statusText: 'OK',
+        headers: {},
+        config: { headers: {} } as any,
+      };
+
+      jest.spyOn(httpService, 'request').mockReturnValueOnce(of(mockResponse) as any);
+
       return request(app.getHttpServer())
         .get('/auth/validate')
         .set('Authorization', `Bearer ${accessToken}`)
