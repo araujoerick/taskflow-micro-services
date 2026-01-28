@@ -1,28 +1,5 @@
-import { useState, useEffect, type ReactNode } from 'react';
-
-const useIsMobile = (breakpoint = 1024) => {
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window === 'undefined') return false;
-    return window.innerWidth < breakpoint;
-  });
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < breakpoint);
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, [breakpoint]);
-
-  return isMobile;
-};
+import type { ReactNode } from 'react';
 import { Link } from '@tanstack/react-router';
-import { Button } from '@/components/ui/button';
-import {
-  Drawer,
-  DrawerContent,
-  DrawerHeader,
-  DrawerTitle,
-  DrawerDescription,
-} from '@/components/ui/drawer';
 import { CheckCircle2, Zap, Shield, Sparkles, Users, BarChart3, Calendar } from 'lucide-react';
 
 type ColorTheme = 'purple' | 'green';
@@ -32,7 +9,6 @@ interface AuthLayoutProps {
   theme: ColorTheme;
   title: string;
   subtitle: string;
-  mobileCta: string;
   mobileLink: { to: '/login' | '/register'; label: string };
   illustrationType: 'tasks' | 'dashboard';
   illustrationTitle: string;
@@ -44,14 +20,12 @@ const themeConfig = {
     gradient: 'from-[#8b5cf6] via-[#a78bfa] to-[#c4b5fd]',
     iconBg: 'from-[#8b5cf6] to-[#a78bfa]',
     iconColor: 'text-[#8b5cf6]',
-    buttonText: 'text-[#8b5cf6]',
     shadow: 'shadow-[#8b5cf6]/25',
   },
   green: {
     gradient: 'from-[#22c55e] via-[#4ade80] to-[#86efac]',
     iconBg: 'from-[#22c55e] to-[#4ade80]',
     iconColor: 'text-[#22c55e]',
-    buttonText: 'text-[#22c55e]',
     shadow: 'shadow-[#22c55e]/25',
   },
 };
@@ -219,7 +193,7 @@ function AuthIllustration({
 
   return (
     <div
-      className={`relative flex h-full flex-col items-center justify-center overflow-hidden bg-linear-to-br ${config.gradient} p-8 lg:p-12`}
+      className={`relative flex h-full flex-col items-center justify-center overflow-hidden bg-linear-to-br ${config.gradient} p-8 md:p-12`}
     >
       <BackgroundBlurs />
       <FloatingDots />
@@ -229,8 +203,8 @@ function AuthIllustration({
           {type === 'tasks' ? <TasksIllustration /> : <DashboardIllustration />}
         </div>
 
-        <h1 className="mb-4 text-3xl font-bold text-white lg:text-4xl">{title}</h1>
-        <p className="mx-auto max-w-sm text-base text-white/80 lg:text-lg">{subtitle}</p>
+        <h1 className="mb-4 text-3xl font-bold text-white md:text-4xl">{title}</h1>
+        <p className="mx-auto max-w-sm text-base text-white/80 md:text-lg">{subtitle}</p>
 
         <FeaturePills variant={type === 'tasks' ? 'login' : 'register'} />
       </div>
@@ -243,66 +217,47 @@ export function AuthLayout({
   theme,
   title,
   subtitle,
-  mobileCta,
   mobileLink,
   illustrationType,
   illustrationTitle,
   illustrationSubtitle,
 }: AuthLayoutProps) {
-  const isMobile = useIsMobile();
-  const [drawerOpen, setDrawerOpen] = useState(false);
   const config = themeConfig[theme];
-
-  // Open drawer only on mobile after mount
-  useEffect(() => {
-    if (isMobile) {
-      setDrawerOpen(true);
-    }
-  }, [isMobile]);
 
   return (
     <div className="min-h-screen">
       {/* Mobile */}
-      <div className={`flex min-h-screen bg-linear-to-br ${config.gradient} lg:hidden`}>
-        <div className="relative flex min-h-screen w-full flex-col items-center justify-center p-6">
+      <div className={`flex min-h-screen flex-col overflow-hidden bg-linear-to-br ${config.gradient} md:hidden`}>
+        <div className="relative flex flex-col items-center px-6 pt-12">
           <BackgroundBlurs />
-
-          <div className="relative z-10 mb-8 text-center">
-            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-white shadow-xl">
-              <CheckCircle2 className={`h-10 w-10 ${config.iconColor}`} />
+          <div className="relative z-10 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-white shadow-xl">
+              <CheckCircle2 className={`h-8 w-8 ${config.iconColor}`} />
             </div>
-            <h1 className="text-3xl font-bold text-white">TaskFlow</h1>
-            <p className="mt-2 text-white/80">{illustrationTitle}</p>
+            <h1 className="text-2xl font-bold text-white">TaskFlow</h1>
+            <p className="mt-1 text-sm text-white/80">{illustrationTitle}</p>
           </div>
-
-          <Button
-            onClick={() => setDrawerOpen(true)}
-            className={`relative z-10 h-14 rounded-2xl bg-white px-8 text-lg font-semibold ${config.buttonText} shadow-xl hover:bg-white/90`}
-          >
-            {mobileCta}
-          </Button>
-
-          <Link
-            to={mobileLink.to}
-            className="relative z-10 mt-4 text-sm font-medium text-white/90 hover:text-white hover:underline"
-          >
-            {mobileLink.label}
-          </Link>
         </div>
 
-        <Drawer open={drawerOpen && isMobile} onOpenChange={setDrawerOpen} shouldScaleBackground={false}>
-          <DrawerContent className="max-h-[92vh] rounded-t-3xl px-6 pb-8">
-            <DrawerHeader className="pt-6 text-center">
-              <DrawerTitle className="text-2xl font-bold">{title}</DrawerTitle>
-              <DrawerDescription>{subtitle}</DrawerDescription>
-            </DrawerHeader>
-            <div className="overflow-y-auto px-2">{children}</div>
-          </DrawerContent>
-        </Drawer>
+        <div className="relative z-10 mt-6 flex-1 rounded-t-3xl bg-white px-6 pb-8 pt-6">
+          <div className="mb-6 text-center">
+            <h2 className="text-2xl font-bold text-gray-900">{title}</h2>
+            <p className="mt-1 text-sm text-gray-500">{subtitle}</p>
+          </div>
+          {children}
+          <div className="mt-6 text-center">
+            <Link
+              to={mobileLink.to}
+              className="text-sm font-medium text-gray-600 hover:text-gray-900 hover:underline"
+            >
+              {mobileLink.label}
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Desktop */}
-      <div className="hidden min-h-screen lg:grid lg:grid-cols-2">
+      <div className="hidden min-h-screen md:grid md:grid-cols-2">
         <AuthIllustration
           type={illustrationType}
           title={illustrationTitle}
@@ -310,7 +265,7 @@ export function AuthLayout({
           theme={theme}
         />
 
-        <div className="flex flex-col items-center justify-center bg-white p-8 lg:p-12">
+        <div className="flex flex-col items-center justify-center bg-white p-8 md:p-12">
           <div className="w-full max-w-md">
             <div className="mb-8 text-center">
               <div

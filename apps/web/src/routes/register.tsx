@@ -60,7 +60,7 @@ function RegisterForm() {
           type="text"
           placeholder="João Silva"
           autoComplete="name"
-          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
+          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 text-gray-900 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
           {...register('name')}
           aria-invalid={!!errors.name}
         />
@@ -74,7 +74,7 @@ function RegisterForm() {
           type="email"
           placeholder="nome@exemplo.com"
           autoComplete="email"
-          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
+          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 text-gray-900 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
           {...register('email')}
           aria-invalid={!!errors.email}
         />
@@ -88,7 +88,7 @@ function RegisterForm() {
           type="password"
           placeholder="Crie uma senha forte"
           autoComplete="new-password"
-          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
+          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 text-gray-900 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
           {...register('password')}
           aria-invalid={!!errors.password}
         />
@@ -103,7 +103,7 @@ function RegisterForm() {
           type="password"
           placeholder="Confirme sua senha"
           autoComplete="new-password"
-          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
+          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 text-gray-900 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
           {...register('confirmPassword')}
           aria-invalid={!!errors.confirmPassword}
         />
@@ -121,7 +121,7 @@ function RegisterForm() {
         Criar conta
       </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="hidden text-center text-sm text-muted-foreground md:block">
         Já tem uma conta?{' '}
         <Link
           to="/login"
@@ -140,8 +140,7 @@ function RegisterPage() {
       theme="green"
       title="Criar uma conta"
       subtitle="Digite suas informações para começar"
-      mobileCta="Criar Conta"
-      mobileLink={{ to: '/login', label: 'Já tenho uma conta' }}
+      mobileLink={{ to: '/login', label: 'Já tem uma conta? Entrar' }}
       illustrationType="dashboard"
       illustrationTitle="Comece sua jornada"
       illustrationSubtitle="Crie sua conta gratuita e transforme a forma como você gerencia suas tarefas"

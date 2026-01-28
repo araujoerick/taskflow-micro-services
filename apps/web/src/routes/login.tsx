@@ -54,7 +54,7 @@ function LoginForm() {
           type="email"
           placeholder="nome@exemplo.com"
           autoComplete="email"
-          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
+          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 text-gray-900 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
           {...register('email')}
           aria-invalid={!!errors.email}
         />
@@ -68,7 +68,7 @@ function LoginForm() {
           type="password"
           placeholder="Digite sua senha"
           autoComplete="current-password"
-          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
+          className="h-12 rounded-xl border-2 border-gray-200 bg-gray-50/50 px-4 text-gray-900 transition-all focus:border-[#8b5cf6] focus:bg-white focus:ring-2 focus:ring-[#8b5cf6]/20"
           {...register('password')}
           aria-invalid={!!errors.password}
         />
@@ -84,7 +84,7 @@ function LoginForm() {
         Entrar
       </Button>
 
-      <p className="text-center text-sm text-muted-foreground">
+      <p className="hidden text-center text-sm text-muted-foreground md:block">
         Não tem uma conta?{' '}
         <Link
           to="/register"
@@ -103,8 +103,7 @@ function LoginPage() {
       theme="purple"
       title="Bem-vindo de volta"
       subtitle="Digite suas credenciais para acessar sua conta"
-      mobileCta="Fazer Login"
-      mobileLink={{ to: '/register', label: 'Criar uma conta' }}
+      mobileLink={{ to: '/register', label: 'Não tem uma conta? Cadastre-se' }}
       illustrationType="tasks"
       illustrationTitle="Organize suas tarefas"
       illustrationSubtitle="Gerencie seus projetos de forma simples e eficiente com o TaskFlow"
