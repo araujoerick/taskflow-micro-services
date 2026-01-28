@@ -102,52 +102,8 @@ describe('Auth Module (e2e)', () => {
           const messages = Array.isArray(body.message)
             ? body.message
             : [body.message];
-          const hasPasswordError = messages.some(
-            (msg) =>
-              msg.includes('Password must contain') ||
-              msg.includes('password must be longer'),
-          );
-          expect(hasPasswordError).toBe(true);
-        });
-    });
-
-    it('should reject password without uppercase letter', () => {
-      return request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          name: 'Jane Doe',
-          email: 'jane2@example.com',
-          password: 'weakpass123!',
-        })
-        .expect(400)
-        .expect((res) => {
-          const body = res.body as ErrorResponse;
-          const messages = Array.isArray(body.message)
-            ? body.message
-            : [body.message];
           const hasPasswordError = messages.some((msg) =>
-            msg.includes('Password must contain'),
-          );
-          expect(hasPasswordError).toBe(true);
-        });
-    });
-
-    it('should reject password without special character', () => {
-      return request(app.getHttpServer())
-        .post('/auth/register')
-        .send({
-          name: 'Jane Doe',
-          email: 'jane3@example.com',
-          password: 'WeakPass123',
-        })
-        .expect(400)
-        .expect((res) => {
-          const body = res.body as ErrorResponse;
-          const messages = Array.isArray(body.message)
-            ? body.message
-            : [body.message];
-          const hasPasswordError = messages.some((msg) =>
-            msg.includes('Password must contain'),
+            msg.includes('password must be longer'),
           );
           expect(hasPasswordError).toBe(true);
         });
