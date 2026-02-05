@@ -1,6 +1,6 @@
-# TaskFlow - Task Management System
+# TaskFlow - Project Management System
 
-A modern, full-stack task management application built with a microservices architecture. The system provides real-time notifications, user authentication, and a responsive web interface.
+A modern, full-stack project management application built with a microservices architecture. The system provides real-time notifications, user authentication, and a responsive web interface.
 
 ## Architecture Overview
 
