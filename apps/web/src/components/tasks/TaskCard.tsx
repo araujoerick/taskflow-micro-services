@@ -66,7 +66,7 @@ export function TaskCard({
         {isCreator && (
           <div className="relative">
             <button
-              className="w-8 h-8 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100"
+              className="w-8 h-8 rounded-full flex items-center justify-center md:opacity-0 group-hover:opacity-100 transition-opacity hover:bg-gray-100"
               onClick={() => setMenuOpen(!menuOpen)}
             >
               <MoreHorizontal className="h-4 w-4 text-gray-500" />
